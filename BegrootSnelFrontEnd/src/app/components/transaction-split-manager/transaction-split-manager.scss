@@ -1,0 +1,274 @@
+/* --- Acties Sectie (Rechts) --- */
+.transaction-actions {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-left: auto;
+  height: 100%;
+}
+
+.category-wrapper {
+  padding-right: 24px;
+}
+
+.category-trigger {
+  appearance: none;
+  -webkit-appearance: none;
+  background: #ffffff;
+  margin: 0;
+  width: 240px;
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #ccc; 
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.category-trigger:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.category-text {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #334155;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.amount-section {
+  border-left: 1px solid #e2e8f0; 
+  padding-left: 24px;
+  min-width: 140px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.amount {
+  font-family: 'Inter', sans-serif;
+  font-weight: 800;
+  font-size: 1.2rem;
+  text-align: right;
+  color: #0f172a;
+  letter-spacing: -0.5px;
+}
+
+.amount.negative {
+  color: #dc2626;
+}
+
+// statische splits
+
+.static-splits-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: 450px;
+  justify-content: flex-end;
+  align-items: center;
+  cursor: pointer;
+}
+
+.static-split-badge {
+  display: flex;
+  align-items: center;
+  background: #f1f5f9;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  gap: 8px;
+  transition: background 0.2s;
+}
+
+.static-split-badge:hover { background: #e2e8f0; }
+
+.split-color-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.split-name { font-size: 0.75rem; font-weight: 600; color: #475569; }
+.split-value { font-size: 0.75rem; font-weight: 700; color: #1e293b; }
+
+// dynamische splits
+
+.split-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.split-input-group {
+  display: flex;
+  align-items: center;
+  background: #f1f5f9;
+  border-radius: 6px;
+  padding: 0 8px;
+  border: 1px solid #e2e8f0;
+
+  input {
+    width: 60px;
+    border: none;
+    background: transparent;
+    padding: 8px 4px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    text-align: right;
+    outline: none;
+  }
+}
+
+.split-input-group input {
+  width: 60px;
+  border: none;
+  background: transparent;
+  padding: 8px 4px;
+  font-weight: 700;
+  text-align: right;
+  outline: none;
+}
+
+.toggle-mode {
+  border: none;
+  background: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+}
+
+
+/* --- Actieknoppen Onderin --- */
+.split-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; 
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.save-split-btn {
+  font-size: 0.75rem;
+  background: #1e293b; /* Match met .main-title kleur */
+  color: #ffffff;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.05em; /* Match met dividers */
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+  &:hover {
+    background: #0f172a;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.add-split-btn {
+  font-size: 0.75rem;
+  color: #6c7685;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  padding: 7px 14px;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    color: #2563eb;
+  }
+}
+
+.cancel-split-btn {
+  font-size: 0.75rem;
+  color: #94a3b8; /* Zacht grijs als standaard */
+  background: transparent;
+  border: none;
+  padding: 8px 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    color: #ef4444; /* Kleurt pas rood bij intentie tot annuleren */
+    background: #fff1f2;
+    border-radius: 6px;
+  }
+}
+
+.remove-split-btn {
+  background: none;
+  border: none;
+  color: #cbd5e1; 
+  cursor: pointer;
+  padding: 8px;
+  margin-left: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  border-radius: 25%; 
+
+  &:hover {
+    color: #ef4444;
+    background: #fee2e2;
+  }
+}
+
+.single-mode-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.init-split-btn {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 4px;
+  transition: color 0.2s;
+}
+
+.init-split-btn:hover {
+  color: #3b82f6;
+  text-decoration: underline;
+}
+
+
+/* De trigger moet iets smaller zijn in split-mode om ruimte te maken voor de inputs */
+.category-trigger.split-size {
+  width: 180px; 
+  height: 36px;
+  font-size: 0.85rem;
+}
+
+

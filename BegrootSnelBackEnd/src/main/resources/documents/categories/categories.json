@@ -1,0 +1,148 @@
+[
+  {
+    "name": "INKOMSTEN",
+    "color": "green",
+    "children": [
+      {
+        "name": "Werk en Salaris",
+        "children": [
+          {"name": "Netto loon/uitkering"},
+          {"name": "Vakantiegeld"},
+          {"name": "13de maand/bonus"},
+          {"name": "Belastingvrij IKB budget"},
+          {"name": "Reiskosten/vergoeding"}
+        ]
+      },
+      {
+        "name": "Toeslagen en Ondersteuning",
+        "children": [
+          {"name": "Toeslagen"},
+          {"name": "Zorgtoeslag"},
+          {"name": "Huurtoeslag"},
+          {"name": "Gemeentelijke ondersteuning"}
+        ]
+      },
+      {
+        "name": "Overig Inkomen",
+        "children": [
+          {"name": "Rente"},
+          {"name": "Belastingteruggaaf"},
+          {"name": "Vastgoed inwonende personen"},
+          {"name": "Inkomsten uit vermogen"},
+          {"name": "Overige inkomsten"}
+        ]
+      }
+    ]
+  },
+  {
+    "name": "UITGAVEN",
+    "color": "red",
+    "children": [
+      {
+        "name": "AUTO",
+        "children": [
+          {"name": "Verzekering"},
+          {"name": "Wegenbelasting"},
+          {"name": "Onderhoud"},
+          {"name": "Afschrijving"},
+          {"name": "Pechulp"},
+          {"name": "Brandstof"},
+          {"name": "Carwash"}
+        ]
+      },
+      {
+        "name": "VASTE LASTEN",
+        "children": [
+          {"name": "Huur / hypotheek"},
+          {"name": "Energie"},
+          {"name": "Water"},
+          {"name": "Lokale lasten"},
+          {"name": "Televisie, internet"},
+          {"name": "Verzekeringen"},
+          {"name": "Zorgverzekering"},
+          {"name": "Telefoon"},
+          {"name": "Contributies en abonnementen"},
+          {"name": "Bankaccount"}
+        ]
+      },
+      {
+        "name": "VARIABELE LASTEN",
+        "children": [
+          {"name": "Supermarkt"},
+          {"name": "Overige huishoudelijke uitgaven"},
+          {"name": "Openbaar Vervoer"},
+          {"name": "Kleding"},
+          {"name": "Uit Eten"},
+          {"name": "Parkeren"},
+          {"name": "Zorgkosten"},
+          {"name": "Studiekosten"},
+          {"name":  "Cadeau's"}
+        ]
+      },
+      {
+        "name": "RESERVERINGS UITGAVEN",
+        "children": [
+          {"name": "Vakantie"},
+          {"name": "Niet-voorziene ziektekosten"},
+          {"name": "Sparen PC"},
+          {"name": "Telefoon's"},
+          {"name": "Kapper"},
+          {"name": "Tandarts"},
+          {"name": "Kleding/Schoenen"}
+        ]
+      },
+      {
+        "name": "PERSOONLIJKE UITGAVEN",
+        "children": [
+          {"name": "Vrijetijdsuitgaven"},
+          {"name": "Incidentele uitgaven"}
+        ]
+      },
+      {
+        "name": "SPAREN / BELEGGEN",
+        "children": [
+          {"name": "Sparen (Buffer)"},
+          {"name": "Beleggingen"}
+        ]
+      }
+    ]
+  },
+  {
+    "name": "SPAARREKENING",
+    "color": "purple",
+    "children": [
+      {
+        "name": "Reserves",
+        "children": [
+          {"name": "Buffer (onvoorziene kosten)"},
+          {"name": "Vakantie"},
+          {"name": "Sparen PC"},
+          {"name": "Oven"},
+          {"name": "Kapper"},
+          {"name": "Tandarts"}
+        ]
+      },
+      {
+        "name": "Auto Reserves",
+        "children": [
+          {"name": "Auto onderhoud"},
+          {"name": "Auto Afschrijving"}
+        ]
+      }
+    ]
+  },
+  {
+    "name": "BELEGGINGSREKENING",
+    "color": "blue",
+    "children": [
+      {
+        "name": "Beleggingen",
+        "children": [
+          {"name": "Aandelen"},
+          {"name": "Obligaties"},
+          {"name": "ETFs"}
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,126 @@
+/* --- Basis Container & Kaarten --- */
+.transaction-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px;
+  background-color: #f4f7f6;
+  min-height: 100vh;
+}
+
+.date {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.main-title {
+  font-size: 1.05rem;
+  color: #1e293b;
+  font-weight: 700;
+  text-transform: capitalize; /* Maakt rauwe caps leesbaar */
+}
+
+.transaction-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: #fff;
+  border-radius: 12px;
+  border-left: 6px solid #ccc;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); 
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+}
+
+.transaction-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1; /* Neemt resterende ruimte in */
+}
+
+.transaction-actions {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-left: 24px;
+}
+
+/* De 'Selecteer categorie' knop styling herstellen */
+.category-trigger {
+  background: #ffffff;
+  width: 240px;
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid var(--border-color);
+  border-left: 4px solid #ccc; 
+  border-radius: var(--radius-md);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  
+  .category-text {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #334155;
+  }
+}
+
+.amount-section {
+  border-left: 1px solid var(--border-color); 
+  padding-left: 24px;
+  min-width: 140px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.amount {
+  font-family: 'Inter', sans-serif;
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: #0f172a;
+  &.negative { color: #dc2626; }
+}
+
+/* --- Collapsable Raw Data Box --- */
+.raw-data-box {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  padding: 16px 24px;
+  margin: -4px 12px 0 12px; 
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.03);
+  position: relative;
+  z-index: 1; 
+  animation: slideDown 0.2s ease-out;
+}
+
+.raw-data-header {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #94a3b8;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+
+.raw-data-content {
+  font-family: 'Monaco', 'Consolas', monospace;
+  font-size: 0.8rem;
+  color: #475569;
+  line-height: 1.4;
+  word-break: break-all;
+  background: #f8fafc;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #f1f5f9;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

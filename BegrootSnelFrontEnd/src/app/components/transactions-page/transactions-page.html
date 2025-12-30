@@ -1,0 +1,34 @@
+<div class="transaction-container">
+  <h2 class="page-title">Banktransacties</h2>
+
+  @if (vm$ | async; as vm) {
+    <div class="transactions-list">
+      @for (t of vm.transactions; track t.id; let i = $index) {
+        
+        @if (isNewMonth(vm.transactions, i)) {
+          <div class="month-divider content-width">
+            <span>{{ formatMonthLabel(t.transactionDate) }}</span>
+          </div>
+        }
+
+        <app-transaction-card 
+           class="content-width"
+           [transaction]="t"
+           (openPalette)="handleOpenPalette($event)">
+        </app-transaction-card>
+      }
+    </div>
+
+    @if (isPaletteOpen) {
+      <app-category-palette 
+         [categories]="flatCategories"
+         [context]="activeTransaction"
+         (select)="handleCategorySelect($event)"
+         (close)="closePalette()">
+      </app-category-palette>
+    }
+  } 
+  @else {
+    <div class="loading">Transacties ophalen...</div>
+  }
+</div>

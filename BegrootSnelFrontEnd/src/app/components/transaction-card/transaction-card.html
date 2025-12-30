@@ -1,0 +1,30 @@
+<div class="transaction-group">
+      <div class="transaction-card" 
+           [style.background]="getCardBackground()" 
+           [style.border-left]="'none'"
+           (click)="isExpanded = !isExpanded">
+
+        <div class="transaction-info">
+          <div class="date">{{ transaction.transactionDate }}</div>
+          <strong class="main-title">{{ transaction.prettyTitle }}</strong>
+        </div>
+
+        <app-transaction-split-manager 
+           [transaction]="transaction"
+           (requestCategory)="onRequestCategory($event)">
+        </app-transaction-split-manager>
+
+        <div class="amount-section">
+          <div class="amount" [class.negative]="transaction.mutation < 0">
+            € {{ transaction.mutation | number: '1.2-2' }}
+          </div>
+        </div>
+      </div>
+
+      @if (isExpanded) {
+        <div class="raw-data-box">
+          <div class="raw-data-header">Ruwe Transactie Data</div>
+          <div class="raw-data-content">{{ transaction.description }}</div>
+        </div>
+      }
+    </div>

@@ -1,0 +1,29 @@
+<div class="palette-overlay" (click)="close.emit()">
+  <div class="palette-box" (click)="$event.stopPropagation()">
+
+    @if (context) {
+    <div class="palette-context-header">
+      <div class="context-info-wrapper">
+        <div class="context-label">Categorie toewijzen aan:</div>
+        <div class="context-title">{{ context.prettyTitle }}</div>
+      </div>
+      <div class="context-amount" [class.negative]="context.mutation < 0">
+        € {{ context.mutation | number:'1.2-2' }}
+      </div>
+    </div>
+    }
+
+    <input #filterInput type="text" placeholder="Zoek categorie..." [(ngModel)]="searchQuery" (input)="filterResults()"
+      (keydown)="onKeyDown($event)" autoFocus>
+
+    <ul class="palette-results">
+      @for (cat of filteredCategories; track cat.name; let i = $index) {
+      <li class="result-item" [class.active]="i === selectedIndex" (click)="select.emit(cat)"
+        (mouseenter)="selectedIndex = i">
+        <span class="parent-path">{{ cat.path }}</span>
+        <span class="leaf-node">{{ cat.name }}</span>
+      </li>
+      }
+    </ul>
+  </div>
+</div>

@@ -1,0 +1,53 @@
+<div class="category-wrapper" (click)="$event.stopPropagation()">
+
+      @if (transaction.isEditingSplits) {
+        @for (split of transaction.splits; track $index) {
+          <div class="split-row">
+            <button class="category-trigger split-size" 
+                    (click)="requestCategory.emit($index)"
+                    [style.border-left-color]="split.category?.color || '#e2e8f0'">
+              <span class="category-text">{{ split.category?.name || 'Selecteer...' }}</span>
+            </button>
+
+            <div class="split-input-group">
+              @if (split.usePercentage) {
+                <input type="number" [(ngModel)]="split.percentage" (input)="updateFromPercentage($index)">
+                <span class="unit">%</span>
+              } @else {
+                <span class="unit">€</span>
+                <input type="number" [(ngModel)]="split.amount" (input)="updateFromAmount($index)">
+              }
+              <button class="toggle-mode" (click)="toggleSplitMode(split)">⇄</button>
+            </div>
+
+            <button class="remove-split-btn" (click)="removeSplit($index)">X</button>
+          </div>
+        }
+        <div class="split-actions">
+          <button class="add-split-btn" (click)="addSplit()">+ Extra split</button>
+          <button class="save-split-btn" (click)="saveSplit()">Opslaan</button>
+          <button class="cancel-split-btn" (click)="cancelSplitting()">Annuleer</button>
+        </div>
+      }
+
+      @else if (hasCategory()) {
+        <div class="static-splits-container" (click)="transaction.isEditingSplits = true">
+          @for (split of transaction.splits; track $index) {
+            <div class="static-split-badge">
+              <span class="split-color-dot" [style.background-color]="split.category?.color || '#e2e8f0'"></span>
+              <span class="split-name">{{ split.category?.name }}</span>
+              <span class="split-value">€ {{ split.amount | number:'1.2-2' }}</span>
+            </div>
+          }
+        </div>
+      }
+
+      @else {
+        <div class="single-mode-wrapper">
+          <button class="category-trigger" (click)="requestCategory.emit(0)" [style.border-left-color]="'#e2e8f0'">
+            <span class="category-text">Selecteer categorie...</span>
+          </button>
+          <button class="init-split-btn" (click)="startSplitting()">+ Splits transactie</button>
+        </div>
+      }
+    </div>

@@ -1,0 +1,33 @@
+<header class="app-header">
+  <div class="header-content">
+    
+    <div class="brand">
+      <div class="logo-wrapper">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="logo-svg">
+          <path d="M12 2L3 7V17L12 22L21 17V7L12 2Z" fill="#78716c"/>
+          <path d="M12 6V18M8 10V14M16 8V16" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span class="brand-name">Begroot<span class="brand-accent">Snel</span></span>
+    </div>
+
+    <nav class="main-nav">
+      <a routerLink="/transactions" routerLinkActive="active" class="nav-item">Transacties</a>
+      <a routerLink="/categories" routerLinkActive="active" class="nav-item">Categorieën</a>
+      <a routerLink="/analysis" routerLinkActive="active" class="nav-item">Analyse</a>
+    </nav>
+
+    <div class="header-actions">
+      <button class="btn-sync" (click)="syncBankData()" [class.syncing]="isSyncing">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+          <path d="M3 3v5h5"/>
+          <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+          <path d="M16 16h5v5"/>
+        </svg>
+        <span>Sync</span>
+      </button>
+    </div>
+
+  </div>
+</header>
