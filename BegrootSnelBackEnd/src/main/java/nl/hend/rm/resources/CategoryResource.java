@@ -17,6 +17,13 @@ public class CategoryResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAll() {
-        return Response.accepted(cs.getAll()).build();
+        return Response.ok(cs.getAll()).build();
+    }
+
+    @Path("/root-categories")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getRootCategories() {
+        return Response.ok(cs.getRootCategories()).build();
     }
 }

@@ -5,6 +5,7 @@ import { TransactionService } from '../../services/transaction-service';
 import { CommonModule } from '@angular/common';
 import { TransactionCard } from '../transaction-card/transaction-card';
 import { CategoryPalette } from '../category-palette/category-palette'; 
+import { CategoryService } from '../../services/category-service';
 
 @Component({
   selector: 'app-transactions-page',
@@ -21,11 +22,11 @@ export class TransactionsPage implements OnInit {
   activeTransaction: TransactionView | null = null;
   activeSplitIndex: number | null = null;
 
-  constructor(private transactionService: TransactionService) {}
+  constructor(private transactionService: TransactionService, private categoryService: CategoryService) {}
 
   ngOnInit() {
     this.vm$ = forkJoin({
-      cats: this.transactionService.getCategories(),
+      cats: this.categoryService.getCategories(),
       trans: this.transactionService.getTransactions()
     }).pipe(
       map(({ cats, trans }) => {

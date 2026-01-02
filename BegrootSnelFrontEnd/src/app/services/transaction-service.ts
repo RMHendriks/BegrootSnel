@@ -18,10 +18,6 @@ export class TransactionService {
         return this.putTransaction(transaction);
     }
 
-    getCategories(): Observable<Category[]> {
-        return this.http.get<Category[]>(`${this.baseUrl}/categories`);
-    }
-
     getTransactions(): Observable<Transaction[]> {
         return this.http.get<Transaction[]>(`${this.baseUrl}/transactions`);
     }

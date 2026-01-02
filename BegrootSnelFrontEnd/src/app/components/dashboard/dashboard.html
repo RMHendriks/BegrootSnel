@@ -1,0 +1,129 @@
+<div class="dashboard-container">
+  <div class="filter-card">
+  <div class="filter-main">
+    <div class="filter-toggle">
+      <button [class.active]="filterMode === 'month'" (click)="setFilterMode('month')">Maand</button>
+      <button [class.active]="filterMode === 'range'" (click)="setFilterMode('range')">Vrije Range</button>
+    </div>
+    
+    <div class="filter-inputs">
+      @if (filterMode === 'month') {
+        <div class="input-group">
+          <select [(ngModel)]="selectedYear" (change)="onMonthYearChange()">
+            @for (year of availableYears; track year) { <option [value]="year">{{ year }}</option> }
+          </select>
+          <select [(ngModel)]="selectedMonth" (change)="onMonthYearChange()">
+            @for (m of months; track m.value) { <option [value]="m.value">{{ m.label }}</option> }
+          </select>
+        </div>
+      } @else {
+        <div class="input-group">
+          <input type="date" [(ngModel)]="customStartDate" (change)="onRangeChange()">
+          <span class="range-sep">tot</span>
+          <input type="date" [(ngModel)]="customEndDate" (change)="onRangeChange()">
+        </div>
+      }
+    </div>
+  </div>
+
+  @if (vm$ | async; as vm) {
+    <div class="filter-stats">
+      <div class="stat-item">
+        <span class="stat-label">Sparen/Beleggen</span>
+        <span class="stat-value" style="color: #6366f1;">
+          {{ (calculateRootTotalByName(vm, 'SPAARREKENING') + calculateRootTotalByName(vm, 'BELEGGINGSREKENING')) | currency:'EUR' }}
+        </span>
+      </div>
+
+      <div class="stat-divider"></div>
+
+      <div class="stat-item">
+        <span class="stat-label">Budget Ruimte</span>
+        <span class="stat-value" 
+            [class.text-danger]="(vm.summary.totalBudgeted - vm.summary.totalSpent) < 0" 
+            [class.text-success]="(vm.summary.totalBudgeted - vm.summary.totalSpent) >= 0">
+            {{ (vm.summary.totalBudgeted - vm.summary.totalSpent) | currency:'EUR' }}
+        </span>
+      </div>
+
+      <div class="stat-divider"></div>
+
+      <div class="stat-item">
+        <span class="stat-label">Inkomsten</span>
+        <span class="stat-value text-success">{{ vm.summary.totalIncome | currency:'EUR' }}</span>
+      </div>
+
+      <span class="stat-operator">−</span>
+
+      <div class="stat-item">
+        <span class="stat-label">Uitgaven</span>
+        <span class="stat-value text-danger">{{ vm.summary.totalSpent | currency:'EUR' }}</span>
+      </div>
+
+      <span class="stat-operator">=</span>
+      
+      <div class="stat-item primary">
+        <span class="stat-label">Netto Balans</span>
+        <span class="stat-value" 
+            [class.text-danger]="(vm.summary.totalIncome - vm.summary.totalSpent) < 0" 
+            [class.text-success]="(vm.summary.totalIncome - vm.summary.totalSpent) >= 0">
+            {{ (vm.summary.totalIncome - vm.summary.totalSpent) | currency:'EUR' }}
+        </span>
+      </div>
+    </div>
+  }
+</div>
+
+  @if (vm$ | async; as vm) {
+    <div class="dashboard-grid">
+  @for (root of vm.roots; track root.id) {
+    @let l1Groups = getLevel1Groups(vm.report, root, vm.categoryMap);
+    
+    @if (l1Groups.length > 0) {
+      <section class="root-container root-{{root.name.replace(' ', '')}}">
+        <header class="root-header" [style.border-top-color]="root.color">
+          <h2>{{ root.name }}</h2>
+          <span class="total-badge">
+            {{ calculateRootTotal(getGroupsByRoot(vm.report, root, vm.categoryMap)) | currency:'EUR' }}
+          </span>
+        </header>
+
+        <div class="root-scroll-area">
+          <div class="l1-list">
+            @for (item of l1Groups; track item.level1.id) {
+              <details class="category-card" [attr.open]=true>
+                <summary class="card-header">
+                  <div class="header-content">
+                    <span class="l1-name">{{ item.level1.name }}</span>
+                    <span class="subtotal">{{ item.subTotal | currency:'EUR' }}</span>
+                  </div>
+                </summary>
+                <div class="card-content">
+                  <table class="category-table">
+                    <tbody>
+                      @for (group of item.groups; track group.category.id) {
+                        <tr>
+                          <td>{{ group.category.name }}</td>
+                          <td class="text-right" style="color: #a8a29e">
+                            {{ group.budgetedAmount | currency:'EUR' }}
+                          </td>
+                          <td class="text-right" 
+                              [class.text-danger]="group.actualAmount > group.budgetedAmount"
+                              [class.text-success]="group.actualAmount <= group.budgetedAmount">
+                            {{ group.actualAmount | currency:'EUR' }}
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </details>
+            }
+          </div>
+        </div>
+      </section>
+    }
+  }
+</div>
+  }
+</div>

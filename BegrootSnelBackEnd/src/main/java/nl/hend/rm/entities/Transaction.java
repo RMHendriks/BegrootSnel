@@ -65,6 +65,7 @@ public class Transaction extends PanacheEntity {
                             existing.category = newSplit.category;
                             existing.amount = newSplit.amount;
                             existing.percentage = newSplit.percentage;
+                            existing.transaction = newSplit.transaction;
                         });
             } else {
                 this.splits.add(newSplit);
@@ -72,4 +73,13 @@ public class Transaction extends PanacheEntity {
         }
     }
 
+    public static List<TransactionSplit> findTransactionListByDateAndCategory(Category cat,
+                                                                              LocalDate start, LocalDate end) {
+        return find("from TransactionSplit s " +
+                        "join fetch s.transaction t " +
+                        "where s.category = ?1 " +
+                        "and t.transactionDate between ?2 and ?3",
+                cat, start, end).list();
+    }
 }
+

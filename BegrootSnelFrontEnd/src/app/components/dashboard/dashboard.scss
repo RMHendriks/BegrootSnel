@@ -1,0 +1,295 @@
+// 1. Layout Basis
+// ---------------------------------------------------------
+.dashboard-container {
+  padding: 24px;
+  padding-top: 56px; 
+  background-color: #fafaf9;
+  height: 100vh;
+  max-height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; 
+}
+
+// 2. Filter Sectie & Status Balk
+// ---------------------------------------------------------
+.filter-card {
+  background: #ffffff;
+  border: 1px solid #e7e5e4;
+  border-radius: 8px;
+  padding: 8px 16px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between; 
+  align-items: center;
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.filter-main {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.filter-toggle {
+  display: flex;
+  background: #f5f5f4;
+  padding: 4px;
+  border-radius: 6px;
+  border: 1px solid #e7e5e4;
+
+  button {
+    border: none;
+    background: transparent;
+    padding: 6px 12px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #78716c;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+
+    &.active {
+      background: #ffffff;
+      color: #44403c;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+  }
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  select, input[type="date"] {
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #e7e5e4;
+    background: #fafaf9;
+    color: #44403c;
+    font-size: 0.85rem;
+    outline: none;
+    cursor: pointer;
+
+    &:hover { border-color: #d6d3d1; }
+    &:focus { border-color: #a8a29e; }
+  }
+
+  .range-sep { color: #a8a29e; font-size: 0.875rem; }
+}
+
+.filter-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px; // Iets meer ruimte tussen de groepen
+  padding-left: 20px;
+  border-left: 1px solid #e7e5e4;
+
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    min-width: 85px;
+
+    .stat-label {
+      font-size: 0.55rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #a8a29e;
+      margin-bottom: 5px; // Meer verticale ruimte tussen label en bedrag
+      line-height: 1;
+    }
+
+    .stat-value {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #44403c;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+
+    &.primary {
+      min-width: 105px;
+      .stat-label { color: #78716c; font-weight: 700; }
+      .stat-value { 
+        font-size: 1.1rem;
+        color: #1c1917;
+        letter-spacing: -0.01em; 
+      }
+    }
+  }
+
+  .stat-operator {
+    font-size: 0.9rem;
+    font-weight: 300;
+    color: #e7e5e4;
+    margin-top: 10px; // Aangepast aan de nieuwe margin-bottom van het label
+    padding: 0 4px;
+    user-select: none;
+  }
+
+  .stat-divider {
+    width: 1px;
+    height: 24px;
+    background: #e7e5e4;
+    margin: 0 10px;
+    opacity: 0.7;
+  }
+}
+
+// 3. Dashboard Grid & Containers
+// ---------------------------------------------------------
+.dashboard-grid {
+  display: grid;
+  gap: 15px;
+  flex-grow: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 24px;
+  grid-template-columns: 1fr; 
+
+  @media (min-width: 1200px) {
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: 1fr 1fr;
+    overflow-y: hidden !important;
+    padding-bottom: 0 !important;
+    height: 100%;
+
+    .root-INKOMSTEN { grid-column: 1; grid-row: 1 / span 2; }
+    .root-UITGAVEN { 
+      grid-column: 2 / span 2; 
+      grid-row: 1 / span 2; 
+      .l1-list { 
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px; }
+    }
+    .root-SPAARREKENING { grid-column: 4; grid-row: 1; }
+    .root-BELEGGINGSREKENING { grid-column: 4; grid-row: 2; }
+  }
+}
+
+.root-container {
+  background: #ffffff;
+  border: 1px solid #e7e5e4;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.root-header {
+  padding: 16px;
+  border-top: 4px solid #78716c;
+  border-bottom: 1px solid #f5f5f4;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+
+  h2 {
+    margin: 0;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+    color: #44403c;
+  }
+}
+
+.root-scroll-area {
+  overflow-y: auto;
+  flex-grow: 1;
+  min-height: 0;
+  padding: 12px;
+  background: #fafaf9;
+
+  &::-webkit-scrollbar { width: 6px; }
+  &::-webkit-scrollbar-thumb { background: #e7e5e4; border-radius: 10px; }
+}
+
+// 4. Kaarten & Tabellen (Inhoud)
+// ---------------------------------------------------------
+.category-card {
+  background: #ffffff;
+  border: 1px solid #e7e5e4;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  overflow: hidden;
+
+  &[open] {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    .card-header { border-bottom: 1px solid #f5f5f4; }
+  }
+}
+
+.card-header {
+  padding: 10px 12px;
+  cursor: pointer;
+  list-style: none;
+  &::-webkit-details-marker { display: none; }
+
+  .header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    .l1-name { font-size: 0.9rem; font-weight: 600; color: #44403c; }
+    .subtotal { font-size: 0.85rem; font-weight: 700; color: #44403c; }
+  }
+}
+
+.category-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+
+  td {
+    padding: 6px 12px;
+    border-bottom: 1px solid #f5f5f4;
+    color: #44403c;
+    &:first-child { width: 50%; }
+    &.text-right { text-align: right; white-space: nowrap; }
+    &.budget { color: #a8a29e; font-size: 0.75rem; }
+  }
+}
+
+// 5. Widgets & Helpers
+// ---------------------------------------------------------
+.summary-widget {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 280px;
+  background: #ffffff;
+  border: 1px solid #e7e5e4;
+  border-radius: 12px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  z-index: 50;
+  
+  // Hier kun je de rest van de summary content styles toevoegen zoals eerder besproken
+}
+
+.total-badge {
+  background: #44403c;
+  color: #fff;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.text-danger { color: #dc2626 !important; font-weight: 600; }
+.text-success { color: #16a34a !important; font-weight: 600; }
+
+.loading-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  color: #78716c;
+}

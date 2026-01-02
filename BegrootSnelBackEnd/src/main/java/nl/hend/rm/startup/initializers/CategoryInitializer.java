@@ -48,6 +48,7 @@ public class CategoryInitializer {
         category.parent = parent;
         category.assignable = Objects.requireNonNullElseGet(node.assignable, () -> (node.children == null || node.children.isEmpty()));
         category.color = category.isRoot() ? node.color : category.retrieveNode().color;
+        category.level = category.getLevel();
 
         category.persist();
 
