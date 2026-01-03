@@ -81,5 +81,18 @@ public class Transaction extends PanacheEntity {
                         "and t.transactionDate between ?2 and ?3",
                 cat, start, end).list();
     }
+
+    public static List<Transaction> findTransactionsByYearMonthAndCategoryId(int year, int month, long categoryId) {
+        LocalDate start = LocalDate.of(year, month, 1);
+        LocalDate end = start.withDayOfMonth(start.lengthOfMonth());
+
+        return find("select distinct t from Transaction t " +
+                        "join t.splits s " +
+                        "left join fetch t.splits " +
+                        "where s.category.id = ?1 " +
+                        "and t.transactionDate between ?2 and ?3 " +
+                        "order by t.transactionDate desc",
+                categoryId, start, end).list();
+    }
 }
 

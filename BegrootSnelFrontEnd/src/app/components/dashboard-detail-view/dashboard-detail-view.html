@@ -1,0 +1,99 @@
+<div class="detail-overlay" (click)="close.emit()">
+  <div class="detail-box" (click)="$event.stopPropagation()">
+    @if (vm$ | async; as vm) {
+      <!-- Header / Stats Section -->
+      <div class="header">
+        <h3>{{ budget.category.name }}</h3>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <span class="label">Budget</span>
+            <span class="value">{{ budget.amount| currency }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="label">Totaal</span>
+            <span class="value">{{ actualAmount | currency }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="label">Verschil</span>
+            <span class="value" [class.negative]="budget.amount < actualAmount" [class.positive]="budget.amount >= actualAmount">
+              {{ budget.amount - actualAmount | currency }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Section -->
+      <div class="actions">
+        @if (!isEditingBudget) {
+          <button class="btn-assign" (click)="onAssignBudget()">
+            <i class="icon-plus"></i> 
+            {{ budget.amount > 0 ? 'Budget wijzigen' : 'Wijs budget toe' }}
+          </button>
+        } @else {
+          <div class="budget-edit-wrapper">
+            <div class="input-group">
+              <span class="currency-symbol">€</span>
+              <input 
+                type="number" 
+                [(ngModel)]="budget.amount" 
+                (keydown.enter)="saveBudget()"
+                (keydown.escape)="cancelEdit()"
+                placeholder="0.00" 
+                autoFocus>
+            </div>
+            
+            <div class="edit-actions">
+              <button class="btn-save" (click)="saveBudget()">Opslaan</button>
+              <button class="btn-cancel" (click)="cancelEdit()">Annuleren</button>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Transactions List -->
+      <div class="transactions-section">
+        <h4>Transacties (Binnen deze categoire)</h4>
+        <div class="transaction-list-container">
+          @if (vm.length > 0) {
+            @for (item of vm; track $index) {
+              <div class="split-centric-card" (click)="toggleExpand(item)">
+                <div class="split-card-main">
+                  <span class="split-color-dot" [style.background-color]="item.transactionSplit.category?.color || '#e2e8f0'"></span>
+                  <span class="split-category-name">{{ item.prettyTitle }}</span>
+                  <span class="split-card-amount">{{ item.transactionSplit.amount | currency }}</span>
+                </div>
+                @if (item.isExpanded) {
+                  <div class="split-card-details">
+                    <div class="parent-info">
+                      <div class="parent-detail-item">
+                        <span class="value">Transactie mutatie: {{ item.mutation | currency }}</span>
+                      </div>
+                      <div class="parent-detail-item">
+                        <span class="value">{{ item.transactionDate | date:'longDate' }}</span>
+                      </div>
+                    </div>
+                    @if (item.otherSplits.length > 0) {
+                    <hr class="detail-divider">
+                    <div class="sibling-splits">
+                      <span class="label">Andere categorieën in deze transactie:</span>
+                      @for (sibling of item.otherSplits; track $index) {
+                        <div class="sibling-split-row">
+                            <span class="split-color-dot-sibling" [style.background-color]="sibling.category?.color || '#e2e8f0'"></span>
+                            <span class="sibling-category">{{ sibling.category?.name || 'Uncategorized' }}</span>
+                            <span class="sibling-amount">{{ sibling.amount | currency }}</span>
+                        </div>
+                      }
+                    </div>
+                  }
+                  </div>
+                }
+              </div>
+            }
+          } @else {
+            <p class="empty-state">Geen transacties gevonden</p>
+          }
+        </div>
+      </div>
+  }
+  </div>
+</div>

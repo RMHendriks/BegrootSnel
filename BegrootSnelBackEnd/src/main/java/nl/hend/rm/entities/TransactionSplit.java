@@ -1,6 +1,7 @@
 package nl.hend.rm.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.*;
 
@@ -28,6 +29,11 @@ public class TransactionSplit extends PanacheEntity {
         this.amount = amount;
         this.percentage = percentage;
         this.transaction = transaction;
+    }
+
+    @JsonProperty("transaction_id")
+    public Long getParentId() {
+        return (transaction != null) ? transaction.id : null;
     }
 
 }

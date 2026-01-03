@@ -34,8 +34,8 @@ export class TransactionSplitManager {
 
     if (t.splits.length === 0) {
       const firstAmount = Number((t.mutation / 2).toFixed(2));
-      t.splits.push({ category: null, amount: firstAmount, percentage: 50, usePercentage: false });
-      t.splits.push({ category: null, amount: Number((t.mutation - firstAmount).toFixed(2)), percentage: 50, usePercentage: false });
+      t.splits.push({ category: null, amount: firstAmount, percentage: 50, usePercentage: false, parentId: t.id });
+      t.splits.push({ category: null, amount: Number((t.mutation - firstAmount).toFixed(2)), percentage: 50, usePercentage: false, parentId: t.id });
     } else {
       const currentTotal = t.splits.reduce((sum, s) => sum + s.amount, 0);
       const remaining = Number((t.mutation - currentTotal).toFixed(2));
@@ -43,7 +43,8 @@ export class TransactionSplitManager {
         category: null,
         amount: remaining,
         percentage: t.mutation !== 0 ? Number(((remaining / t.mutation) * 100).toFixed(2)) : 0,
-        usePercentage: false
+        usePercentage: false,
+        parentId: t.id
       });
     }
   }
@@ -100,7 +101,7 @@ export class TransactionSplitManager {
     if (confirm('Weet je zeker dat je de splits wilt verwijderen?')) {
       this.transaction.splits = [];
       // Herstel de basis staat (1 lege split) om errors te voorkomen
-      this.transaction.splits = [{ category: null, amount: this.transaction.mutation, percentage: 100, usePercentage: false }];
+      this.transaction.splits = [{ category: null, amount: this.transaction.mutation, percentage: 100, usePercentage: false, parentId: this.transaction.id }];
       this.transaction.isEditingSplits = false;
     }
   }

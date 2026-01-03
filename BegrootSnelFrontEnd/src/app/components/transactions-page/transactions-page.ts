@@ -37,7 +37,7 @@ export class TransactionsPage implements OnInit {
           // Init met 1 lege split als er niets is
           splits: (t.splits && t.splits.length > 0) 
             ? t.splits 
-            : [{ category: null, amount: t.mutation, percentage: 100, usePercentage: false }],
+            : [{ category: null, amount: t.mutation, percentage: 100, usePercentage: false, parentId: t.id }],
           isExpanded: false,
           isEditingSplits: false
         }));
@@ -58,7 +58,7 @@ export class TransactionsPage implements OnInit {
       // Safety check: zorg dat de split bestaat
       if (!this.activeTransaction.splits || this.activeTransaction.splits.length === 0) {
          this.activeTransaction.splits = [{ 
-             category: null, amount: this.activeTransaction.mutation, percentage: 100, usePercentage: false 
+             category: null, amount: this.activeTransaction.mutation, percentage: 100, usePercentage: false, parentId: this.activeTransaction.id
          }];
       }
 

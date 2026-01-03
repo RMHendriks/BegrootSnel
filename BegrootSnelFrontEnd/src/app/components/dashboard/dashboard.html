@@ -9,12 +9,14 @@
     <div class="filter-inputs">
       @if (filterMode === 'month') {
         <div class="input-group">
+          <button class="month-nav-button" (click)="decrementMonth()">&lt;</button>
           <select [(ngModel)]="selectedYear" (change)="onMonthYearChange()">
             @for (year of availableYears; track year) { <option [value]="year">{{ year }}</option> }
           </select>
           <select [(ngModel)]="selectedMonth" (change)="onMonthYearChange()">
             @for (m of months; track m.value) { <option [value]="m.value">{{ m.label }}</option> }
           </select>
+          <button class="month-nav-button" (click)="incrementMonth()">&gt;</button>
         </div>
       } @else {
         <div class="input-group">
@@ -102,7 +104,8 @@
                   <table class="category-table">
                     <tbody>
                       @for (group of item.groups; track group.category.id) {
-                        <tr>
+                        <!-- Added (contextmenu) binding here -->
+                        <tr (click)="onRowClick(group)">
                           <td>{{ group.category.name }}</td>
                           <td class="text-right" style="color: #a8a29e">
                             {{ group.budgetedAmount | currency:'EUR' }}
@@ -110,7 +113,7 @@
                           <td class="text-right" 
                               [class.text-danger]="group.actualAmount > group.budgetedAmount"
                               [class.text-success]="group.actualAmount <= group.budgetedAmount">
-                            {{ group.actualAmount | currency:'EUR' }}
+                            <span>{{ group.actualAmount | currency:'EUR' }}</span>
                           </td>
                         </tr>
                       }
@@ -125,5 +128,14 @@
     }
   }
 </div>
+  }
+
+  <!-- Detail View Modal -->
+  @if (detailViewVisible) {
+    <app-dashboard-detail-view
+      [budget]="budget"
+      [actualAmount]="actualAmount"
+      (close)="closeDetailView()">
+    </app-dashboard-detail-view>
   }
 </div>

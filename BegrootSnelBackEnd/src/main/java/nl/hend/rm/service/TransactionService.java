@@ -4,13 +4,17 @@ import com.fasterxml.jackson.core.io.BigDecimalParser;
 import io.quarkus.panache.common.Sort;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
+import nl.hend.rm.dto.SplitCategoryDto;
 import nl.hend.rm.entities.Transaction;
+import nl.hend.rm.entities.TransactionSplit;
 
 import java.io.*;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -95,4 +99,37 @@ public class TransactionService {
         return Transaction.listAll(Sort.descending("transactionDate").and("id").direction(Sort.Direction.Descending));
     }
 
+    public List<SplitCategoryDto> getTransactionsByYearMonthAndCategoryId(int year, int month, long category_id) {
+        List<Transaction> transactionList = Transaction.findTransactionsByYearMonthAndCategoryId(year, month, category_id);
+        List<SplitCategoryDto> splitCategoryDtoList = new ArrayList<>();
+
+        for (Transaction transaction: transactionList) {
+            splitCategoryDtoList.add(mapToSplitCategoryDto(transaction, category_id));
+        }
+
+        return splitCategoryDtoList;
+    }
+
+    private SplitCategoryDto mapToSplitCategoryDto(Transaction transaction, long categoryId) {
+        TransactionSplit mainSplit = transaction.splits.stream()
+                .filter(s -> s.category.id == categoryId)
+                .findFirst()
+                .orElseThrow();
+
+        List<TransactionSplit> otherSplits = new ArrayList<>();
+        if (transaction.splits.size() > 1) {
+            otherSplits = transaction.splits.stream()
+                    .filter(s -> s.category.id != categoryId)
+                    .toList();
+        }
+
+        return new SplitCategoryDto(
+                mainSplit,
+                transaction.id,
+                transaction.mutation,
+                transaction.transactionDate,
+                transaction.prettyTitle,
+                transaction.description,
+                otherSplits);
+    }
 }

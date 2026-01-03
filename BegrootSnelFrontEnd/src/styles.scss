@@ -50,3 +50,56 @@
   font-size: 0.85rem;
   color: #64748b;
 }
+
+:root {
+  --bg-main: #f4f7f6;
+  --bg-card: #ffffff;
+  --border-color: #e2e8f0;
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --radius-lg: 12px;
+  --radius-md: 8px;
+}
+
+.transaction-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px;
+  background-color: var(--bg-main);
+  min-height: 100vh;
+}
+
+/* De vaste breedte op één plek */
+.content-width {
+  width: 65%;
+  min-width: 750px;
+}
+
+.month-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 28px 0 12px 0;
+  /* Geen @extend meer, breedte regelen we in HTML */
+
+  &::before, &::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #cbd5e1;
+  }
+
+  span {
+    padding: 0 20px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+}
+
+.unit {
+  font-size: 0.85rem;
+  color: #64748b;
+}

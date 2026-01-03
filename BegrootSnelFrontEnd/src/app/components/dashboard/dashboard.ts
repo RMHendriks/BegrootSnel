@@ -1,12 +1,15 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { BehaviorSubject, combineLatest, map, Observable, shareReplay, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, combineLatest, map, Observable, of, shareReplay, switchMap, take, tap } from 'rxjs';
 import { ReportService } from '../../services/report-service';
 import { CategoryService } from '../../services/category-service';
 import { Report } from '../../models/report';
 import { TransactionCategoryGroup } from '../../models/transaction-category-group';
 import { Category } from '../../models/category';
+import { DashboardDetailView } from '../dashboard-detail-view/dashboard-detail-view';
+import { BudgetService } from '../../services/budget-service';
+import { Budget } from '../../models/budget';
 
 interface ReportParams {
   year?: number;
@@ -31,7 +34,7 @@ interface SummaryData {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DashboardDetailView],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
@@ -39,6 +42,7 @@ export class Dashboard implements OnInit {
 
   private reportService = inject(ReportService);
   private categoryService = inject(CategoryService);
+  private budgetService = inject(BudgetService);
 
   // Filters state
   filterMode: 'month' | 'range' = 'month';
@@ -54,6 +58,8 @@ export class Dashboard implements OnInit {
     { value: 1, label: 'Januari' }, { value: 2, label: 'Februari' },
     { value: 3, label: 'Maart' }, { value: 4, label: 'April' },
     { value: 5, label: 'Mei' }, { value: 6, label: 'Juni' },
+    { value: 7, label: 'Juli' }, { value: 8, label: 'Augustus' },
+    { value: 9, label: 'September' }, { value: 10, label: 'Oktober' },
     { value: 11, label: 'November' }, { value: 12, label: 'December' }
   ];
 
@@ -76,17 +82,30 @@ export class Dashboard implements OnInit {
     shareReplay(1)
   );
 
+  budgets$ = this.params$.pipe(
+    switchMap(p => {
+      // Use the params state (p), same as report$ logic
+      if (p.year && p.month) {
+        return this.budgetService.getBudgets(p.year, p.month);
+      }
+      // Return empty array if in Range mode (start/end) to prevent errors
+      return of([]);
+    }),
+    shareReplay(1)
+  );
+
   vm$ = combineLatest({
     report: this.report$,
     allCategories: this.allCategories$,
+    budgets: this.budgets$,
     roots: this.allCategories$.pipe(map(cats => cats.filter(c => c.level === 0)))
   }).pipe(
-    map(({ report, allCategories, roots }) => {
+    // 3. Destructure 'budgets' uit het resultaat
+    map(({ report, allCategories, budgets, roots }) => {
       const categoryMap = new Map(allCategories.map(c => [c.id, c]));
 
-      // Bereken Summary Data
+      // Bereken Summary Data (ongewijzigd)
       const allGroups = (report as any).transactionCategoryGroupDtoList || [];
-
       let totalIncome = 0;
       let totalBudgeted = 0;
       let totalSpent = 0;
@@ -108,7 +127,8 @@ export class Dashboard implements OnInit {
         difference: totalIncome - totalSpent
       };
 
-      return { report, roots, categoryMap, summary };
+      // 4. Geef budgets mee in de return
+      return { report, roots, categoryMap, summary, budgets };
     })
   );
 
@@ -127,6 +147,28 @@ export class Dashboard implements OnInit {
     if (this.customStartDate && this.customEndDate) {
       this.params$.next({ start: this.customStartDate, end: this.customEndDate });
     }
+  }
+
+  incrementMonth() {
+    if (this.selectedYear >= Math.max(...this.availableYears) && this.selectedMonth === 12) return;
+    if (this.selectedMonth === 12) {
+      this.selectedMonth = 1;
+      this.selectedYear++;
+    } else {
+      this.selectedMonth++;
+    }
+    this.onMonthYearChange();
+  }
+
+  decrementMonth() {
+    if (this.selectedYear <= Math.min(...this.availableYears) && this.selectedMonth === 1) return;
+    if (this.selectedMonth === 1) {
+      this.selectedMonth = 12;
+      this.selectedYear--;
+    } else {
+      this.selectedMonth--;
+    }
+    this.onMonthYearChange();
   }
 
   private getAllChildIds(category: Category): number[] {
@@ -208,10 +250,57 @@ export class Dashboard implements OnInit {
   }
 
   calculateRootTotalByName(vm: any, rootName: string): number {
-  const root = vm.roots.find((r: any) => r.name.toUpperCase() === rootName.toUpperCase());
-  if (!root) return 0;
-  
-  const groups = this.getGroupsByRoot(vm.report, root, vm.categoryMap);
-  return this.calculateRootTotal(groups);
-}
+    const root = vm.roots.find((r: any) => r.name.toUpperCase() === rootName.toUpperCase());
+    if (!root) return 0;
+
+    const groups = this.getGroupsByRoot(vm.report, root, vm.categoryMap);
+    return this.calculateRootTotal(groups);
+  }
+
+
+  // --- Detail View State ---
+  detailViewVisible = false;
+
+  // --- Data for the Detail View ---
+  budget: Budget = { 
+    budgetId: null, 
+    category: { id: 0 } as Category,
+    amount: 0, 
+    month: 0, 
+    year: 0 
+  };
+
+  actualAmount: number = 0;
+
+  onRowClick(group: any) {
+    // Haal de huidige data uit de VM snapshot (take 1)
+    this.vm$.pipe(take(1)).subscribe(vm => {
+      
+      // Zoek of er al een budget bestaat in de lijst die we al hebben
+      const foundBudget = vm.budgets.find((b: Budget) => b.category.id === group.category.id);
+
+      if (foundBudget) {
+        // Gebruik het bestaande object uit de lijst
+        this.budget = foundBudget;
+      } else {
+        // Maak een nieuw object aan dat voldoet aan jouw Interface
+        this.budget = {
+          budgetId: null,
+          category: group.category,
+          amount: 0,
+          month: this.selectedMonth,
+          year: this.selectedYear
+        };
+      }
+
+      this.actualAmount = group.actualAmount;
+      this.detailViewVisible = true;
+    });
+  }
+
+  closeDetailView() {
+    this.detailViewVisible = false;
+  }
+
+
 }

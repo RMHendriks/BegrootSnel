@@ -5,4 +5,5 @@ export interface TransactionSplit {
   amount: number;
   percentage: number;
   usePercentage?: boolean;
+  parentId: number;
 }

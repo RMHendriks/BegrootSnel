@@ -1,9 +1,12 @@
 package nl.hend.rm.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 @Entity
 @Table(name = "budgets", uniqueConstraints = {
@@ -13,6 +16,7 @@ public class Budget extends PanacheEntity {
 
     @ManyToOne
     @JoinColumn(name = "category_id", nullable = false)
+    @JsonIgnore
     public Category category;
 
     @Column(nullable = false)
@@ -25,4 +29,14 @@ public class Budget extends PanacheEntity {
     public int year;
 
     public Budget() {}
+
+    @JsonProperty("category_id")
+    public long getCategoryId() {
+        return category.id;
+    }
+
+    public static Optional<Budget> findByYearMonthAndCategory(int year, int month, long categoryId) {
+        return find("year = ?1 and month = ?2 and category.id = ?3", year, month, categoryId)
+                .firstResultOptional();
+    }
 }
