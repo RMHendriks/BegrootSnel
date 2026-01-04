@@ -22,13 +22,20 @@ public class Budget extends PanacheEntity {
     @Column(nullable = false)
     public BigDecimal amount;
 
-    @Column(name = "budget_month", nullable = false)
-    public int month;
-
     @Column(name = "budget_year", nullable = false)
     public int year;
 
+    @Column(name = "budget_month", nullable = false)
+    public int month;
+
     public Budget() {}
+
+    public Budget(Category category, BigDecimal amount, int year, int month) {
+        this.category = category;
+        this.amount = amount;
+        this.year = year;
+        this.month = month;
+    }
 
     @JsonProperty("category_id")
     public long getCategoryId() {

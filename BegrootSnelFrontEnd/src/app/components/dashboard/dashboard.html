@@ -32,7 +32,7 @@
     <div class="filter-stats">
       <div class="stat-item">
         <span class="stat-label">Sparen/Beleggen</span>
-        <span class="stat-value" style="color: #6366f1;">
+        <span class="stat-value text-indigo">
           {{ (calculateRootTotalByName(vm, 'SPAARREKENING') + calculateRootTotalByName(vm, 'BELEGGINGSREKENING')) | currency:'EUR' }}
         </span>
       </div>
@@ -102,19 +102,52 @@
                 </summary>
                 <div class="card-content">
                   <table class="category-table">
+                    <thead>
+                      <tr>
+                        <th class="th-name">Categorie</th>
+                        
+                        @if (root.name === 'INKOMSTEN') {
+                          <th class="th-amount">Verwacht</th>
+                          <th class="th-amount">Ontvangen</th>
+                          <th class="th-amount">Verschil</th>
+                        } @else {
+                          <th class="th-amount">Budget</th>
+                          <th class="th-amount">Uitgaven</th>
+                          <th class="th-amount">Over</th>
+                        }
+                        
+                      </tr>
+                    </thead>
                     <tbody>
                       @for (group of item.groups; track group.category.id) {
-                        <!-- Added (contextmenu) binding here -->
+                        
                         <tr (click)="onRowClick(group)">
-                          <td>{{ group.category.name }}</td>
-                          <td class="text-right" style="color: #a8a29e">
+                          
+                          <td class="td-name">
+                            {{ group.category.name }}
+                          </td>
+
+                          <td class="td-amount text-secondary">
                             {{ group.budgetedAmount | currency:'EUR' }}
                           </td>
-                          <td class="text-right" 
-                              [class.text-danger]="group.actualAmount > group.budgetedAmount"
-                              [class.text-success]="group.actualAmount <= group.budgetedAmount">
-                            <span>{{ group.actualAmount | currency:'EUR' }}</span>
+
+                          <td class="td-amount text-dark">
+                            {{ group.actualAmount | currency:'EUR' }}
                           </td>
+
+                          @let isIncome = root.name === 'INKOMSTEN';
+  
+                          @let diff = isIncome ? (group.actualAmount - group.budgetedAmount): (group.budgetedAmount - group.actualAmount);
+
+                          <td class="td-amount td-diff">
+                            <span class="badge"
+                              [class.badge-danger]="diff < 0" 
+                              [class.badge-success]="diff > 0"
+                              [class.badge-neutral]="diff === 0">
+                              {{ diff | currency:'EUR' }}
+                            </span>
+                          </td>
+
                         </tr>
                       }
                     </tbody>
@@ -135,7 +168,8 @@
     <app-dashboard-detail-view
       [budget]="budget"
       [actualAmount]="actualAmount"
-      (close)="closeDetailView()">
+      (close)="closeDetailView()"
+      (savedBudget)="onBudgetUpdated()">
     </app-dashboard-detail-view>
   }
 </div>

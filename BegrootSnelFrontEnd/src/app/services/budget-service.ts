@@ -20,8 +20,8 @@ export class BudgetService {
         return this.http.post<Budget>(`${this.baseUrl}/budgets`, budget);
     }
 
-    putBudget(budgetId: number, budget: Budget): Observable<Budget> {
-        return this.http.put<Budget>(`${this.baseUrl}/budgets/${budgetId}`, budget);
+    putBudget(budget: Budget): Observable<Budget> {
+        return this.http.put<Budget>(`${this.baseUrl}/budgets/`, budget);
     }
 
 }

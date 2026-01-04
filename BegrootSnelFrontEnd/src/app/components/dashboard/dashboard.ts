@@ -82,13 +82,13 @@ export class Dashboard implements OnInit {
     shareReplay(1)
   );
 
-  budgets$ = this.params$.pipe(
-    switchMap(p => {
-      // Use the params state (p), same as report$ logic
+  private refreshBudgets$ = new BehaviorSubject<void>(undefined);
+
+  budgets$ = combineLatest([this.params$, this.refreshBudgets$]).pipe(
+    switchMap(([p, _]) => {
       if (p.year && p.month) {
         return this.budgetService.getBudgets(p.year, p.month);
       }
-      // Return empty array if in Range mode (start/end) to prevent errors
       return of([]);
     }),
     shareReplay(1)
@@ -97,20 +97,35 @@ export class Dashboard implements OnInit {
   vm$ = combineLatest({
     report: this.report$,
     allCategories: this.allCategories$,
-    budgets: this.budgets$,
+    budgets: this.budgets$, // Bevat de verse data na je .next()
     roots: this.allCategories$.pipe(map(cats => cats.filter(c => c.level === 0)))
   }).pipe(
-    // 3. Destructure 'budgets' uit het resultaat
     map(({ report, allCategories, budgets, roots }) => {
       const categoryMap = new Map(allCategories.map(c => [c.id, c]));
 
-      // Bereken Summary Data (ongewijzigd)
+      // 1. Maak een Map van de NIEUWE budgets voor snelle lookup
+      const budgetMap = new Map(budgets.map(b => [b.category.id, b]));
+
       const allGroups = (report as any).transactionCategoryGroupDtoList || [];
+
       let totalIncome = 0;
       let totalBudgeted = 0;
       let totalSpent = 0;
 
+      // 2. Loop door de groepen heen
       allGroups.forEach((g: TransactionCategoryGroup) => {
+
+        const freshBudget = budgetMap.get(g.category.id);
+
+        if (freshBudget) {
+          // Overschrijf de (oude) waarde uit het report met de nieuwe waarde
+          g.budgetedAmount = freshBudget.amount;
+        } else {
+          // Geen budget gevonden in de DB? Dan is het 0.
+          g.budgetedAmount = 0;
+        }
+
+        // 3. Herbereken de totalen met de BIJGEWERKTE g.budgetedAmount
         const root = this.findRootForCategory(g.category.id, categoryMap);
         if (root?.name.toUpperCase() === 'INKOMSTEN') {
           totalIncome += g.actualAmount;
@@ -127,7 +142,6 @@ export class Dashboard implements OnInit {
         difference: totalIncome - totalSpent
       };
 
-      // 4. Geef budgets mee in de return
       return { report, roots, categoryMap, summary, budgets };
     })
   );
@@ -262,12 +276,12 @@ export class Dashboard implements OnInit {
   detailViewVisible = false;
 
   // --- Data for the Detail View ---
-  budget: Budget = { 
-    budgetId: null, 
+  budget: Budget = {
+    budgetId: null,
     category: { id: 0 } as Category,
-    amount: 0, 
-    month: 0, 
-    year: 0 
+    amount: 0,
+    month: 0,
+    year: 0
   };
 
   actualAmount: number = 0;
@@ -275,7 +289,7 @@ export class Dashboard implements OnInit {
   onRowClick(group: any) {
     // Haal de huidige data uit de VM snapshot (take 1)
     this.vm$.pipe(take(1)).subscribe(vm => {
-      
+
       // Zoek of er al een budget bestaat in de lijst die we al hebben
       const foundBudget = vm.budgets.find((b: Budget) => b.category.id === group.category.id);
 
@@ -302,5 +316,8 @@ export class Dashboard implements OnInit {
     this.detailViewVisible = false;
   }
 
+  onBudgetUpdated() {
+    this.refreshBudgets$.next();
+  }
 
 }

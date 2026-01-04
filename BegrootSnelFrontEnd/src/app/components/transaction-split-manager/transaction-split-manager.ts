@@ -28,6 +28,7 @@ export class TransactionSplitManager {
     this.addSplit();
   }
 
+  // TODO fix the wrong request cast
   addSplit() {
     const t = this.transaction;
     if (!t.splits) t.splits = [];

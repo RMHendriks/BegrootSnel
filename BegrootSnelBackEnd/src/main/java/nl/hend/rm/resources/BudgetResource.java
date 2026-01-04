@@ -37,15 +37,14 @@ public class BudgetResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response postBudgetsByYearAndMonth(BudgetDto dto) {
-        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+        return Response.ok(bs.postBudget(dto)).build();
     }
 
     @PUT
-    @Path("/{year}/{month}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response putBudgetsByYearAndMonth(@PathParam("year") int year, @PathParam("month") int month, BudgetDto dto) {
-        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+    public Response putBudgetsByYearAndMonth(BudgetDto dto) {
+        return Response.ok(bs.putBudget(dto)).build();
     }
 
     @DELETE

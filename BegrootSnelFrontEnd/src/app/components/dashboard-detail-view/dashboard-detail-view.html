@@ -69,7 +69,7 @@
                         <span class="value">Transactie mutatie: {{ item.mutation | currency }}</span>
                       </div>
                       <div class="parent-detail-item">
-                        <span class="value">{{ item.transactionDate | date:'longDate' }}</span>
+                        <span class="value">{{ item.transactionDate | date: 'longDate' }}</span>
                       </div>
                     </div>
                     @if (item.otherSplits.length > 0) {

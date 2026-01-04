@@ -7,6 +7,7 @@ import { Budget } from '../../models/budget';
 import { map, Observable } from 'rxjs';
 import { SplitViewItem } from '../../models/split-view-item';
 import { FormsModule } from '@angular/forms';
+import { BudgetService } from '../../services/budget-service';
 
 @Component({
   selector: 'app-dashboard-detail-view',
@@ -20,10 +21,11 @@ export class DashboardDetailView implements OnInit {
   @Input() budget: Budget = { budgetId: 0, category: { id: 0, name: '' }, amount: 0, month: 0, year: 0 } as Budget;
   @Input() actualAmount: number = 0;
   @Output() close = new EventEmitter<void>();
-  @Output() newBudget = new EventEmitter<Budget>();
+  @Output() savedBudget = new EventEmitter<void>();
 
 
   private transactionSplitService = inject(TransactionSplitService);
+  private budgetService = inject(BudgetService);
 
   isEditingBudget = false;
   originalAmount = 0;
@@ -45,22 +47,34 @@ export class DashboardDetailView implements OnInit {
     }
   }
 
-
-onAssignBudget() {
-    this.originalAmount = this.budget.amount; // Store original incase of cancel
+  onAssignBudget() {
+    this.originalAmount = this.budget.amount;
     this.isEditingBudget = true;
     
-    // Optional: Focus the input automatically (requires ViewChild, skipped for brevity)
   }
 
   saveBudget() {
     console.log('Saving budget:', this.budget);
-    // Call your budgetService.save(this.budget) here
     this.isEditingBudget = false;
+    this.savedBudget.emit();
+    if (!this.budget.budgetId) {
+      this.budgetService.postBudget(this.budget).subscribe({
+        next: (updatedBudget) => {
+          console.log('Budget saved successfully:', updatedBudget);
+        }
+      });
+    }
+    else {
+      this.budgetService.putBudget(this.budget).subscribe({
+        next: (updatedBudget) => {
+          console.log('Budget updated successfully:', updatedBudget);
+        }
+      });
+    }
   }
 
   cancelEdit() {
-    this.budget.amount = this.originalAmount; // Revert changes
+    this.budget.amount = this.originalAmount;
     this.isEditingBudget = false;
   }
 
