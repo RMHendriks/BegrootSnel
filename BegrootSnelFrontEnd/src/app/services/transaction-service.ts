@@ -7,26 +7,30 @@ import { Category } from '../models/category';
 import { Transaction } from '../models/transaction';
 
 @Injectable({
-    providedIn: 'root'
+  providedIn: 'root',
 })
 export class TransactionService {
-    private http = inject(HttpClient);
+  private http = inject(HttpClient);
 
-    private baseUrl = environment.apiUrl; 
+  private baseUrl = environment.apiUrl;
 
-    updateTransaction(transaction: Transaction): Observable<Transaction> {
-        return this.putTransaction(transaction);
-    }
+  updateTransaction(transaction: Transaction): Observable<Transaction> {
+    return this.putTransaction(transaction);
+  }
 
-    getTransactions(): Observable<Transaction[]> {
-        return this.http.get<Transaction[]>(`${this.baseUrl}/transactions`);
-    }
+  getTransactions(accountId?: number | null): Observable<Transaction[]> {
+    const params = accountId ? `?accountId=${accountId}` : '';
+    return this.http.get<Transaction[]>(`${this.baseUrl}/transactions${params}`);
+  }
 
-    putTransaction(transaction: Transaction): Observable<Transaction> {
-        return this.http.put<Transaction>(`${this.baseUrl}/transactions/${transaction.id}`, transaction);
-    }
+  putTransaction(transaction: Transaction): Observable<Transaction> {
+    return this.http.put<Transaction>(
+      `${this.baseUrl}/transactions/${transaction.id}`,
+      transaction,
+    );
+  }
 
-    intializeTransactions(): Observable<Transaction> {
-        return this.http.get<Transaction>(`${this.baseUrl}/transactions/load`);
-    }
+  intializeTransactions(): Observable<Transaction> {
+    return this.http.get<Transaction>(`${this.baseUrl}/transactions/load`);
+  }
 }
