@@ -1,0 +1,923 @@
+// ─── Page layout ───────────────────────────────────────────────────────────────
+// Same centered-scroll pattern as the transactions and import pages.
+.account-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: calc(var(--header-height) + var(--space-8)) var(--space-5) var(--space-10);
+  background-color: var(--color-bg-app);
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.account-header {
+  text-align: center;
+  margin-bottom: var(--space-8);
+
+  h2 {
+    margin: 0 0 var(--space-2);
+    font-family: var(--font-serif);
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--color-text);
+    letter-spacing: -0.01em;
+  }
+}
+
+.account-subtitle {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+// ─── Error banner ──────────────────────────────────────────────────────────────
+.error-banner {
+  width: 100%;
+  max-width: 640px;
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+  border: 1px solid var(--color-danger-bg);
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  transition: opacity 0.15s;
+
+  &:hover {
+    opacity: 0.8;
+  }
+
+  .dismiss {
+    font-weight: 400;
+    opacity: 0.6;
+    font-size: 0.8rem;
+  }
+}
+
+// ─── Account selector bar ─────────────────────────────────────────────────────
+.account-selector-bar {
+  width: 100%;
+  max-width: 640px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.account-select {
+  flex-grow: 1;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-card);
+  color: var(--color-text);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  min-width: 0;
+  appearance: auto;
+  transition: border-color 0.15s;
+
+  &:hover {
+    border-color: var(--color-info);
+  }
+
+  &:focus {
+    border-color: var(--color-info);
+    box-shadow: 0 0 0 2px var(--color-info-bg);
+  }
+}
+
+.btn-add {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: var(--color-info);
+  border: none;
+  padding: var(--space-2) var(--space-5);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    opacity 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  &:hover {
+    background: #1565c0;
+  }
+}
+
+// ─── Add/Edit form card ───────────────────────────────────────────────────────
+.form-card {
+  width: 100%;
+  max-width: 640px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5) var(--space-6);
+  margin-bottom: var(--space-6);
+  box-shadow: var(--shadow-xs);
+
+  h3 {
+    margin: 0 0 var(--space-4);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--color-text);
+  }
+}
+
+.form-row {
+  display: flex;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+
+  label {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-muted);
+  }
+
+  input,
+  select {
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--slate-200);
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    font-family: var(--font-sans);
+    color: var(--slate-800);
+    background: var(--color-bg-card);
+    outline: none;
+    transition: border-color 0.15s;
+
+    &:focus {
+      border-color: var(--color-info);
+    }
+  }
+
+  select {
+    cursor: pointer;
+  }
+}
+
+.form-actions {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: flex-end;
+}
+
+.btn-save {
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: var(--space-2) var(--space-5);
+  background: var(--slate-800);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s;
+  letter-spacing: 0.03em;
+
+  &:hover {
+    background: var(--slate-900);
+  }
+}
+
+.btn-cancel {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: var(--space-2) var(--space-4);
+  background: transparent;
+  color: var(--slate-400);
+  border: none;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all 0.15s;
+
+  &:hover {
+    color: var(--color-danger);
+    background: var(--color-danger-bg);
+  }
+}
+
+// ─── Account detail card ──────────────────────────────────────────────────────
+.account-detail-card {
+  width: 100%;
+  max-width: 640px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5) var(--space-6);
+  margin-bottom: var(--space-6);
+  box-shadow: var(--shadow-xs);
+  border-left: 4px solid var(--color-info);
+
+  &.savings {
+    border-left-color: var(--color-success);
+  }
+}
+
+.account-detail-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+
+  > :first-child {
+    flex-grow: 1;
+    min-width: 0;
+  }
+}
+
+.detail-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--slate-800);
+  margin-bottom: var(--space-1);
+}
+
+.detail-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--stone-500);
+  font-variant-numeric: tabular-nums;
+
+  .meta-sep {
+    color: var(--stone-300);
+    user-select: none;
+  }
+}
+
+.savings-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  background: var(--color-info-bg);
+  color: var(--color-info);
+}
+
+.account-detail-card.savings .savings-badge {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+.detail-balance {
+  text-align: right;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.balance-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+  margin-bottom: 2px;
+}
+
+.balance-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--slate-800);
+  font-variant-numeric: tabular-nums;
+
+  &.negative {
+    color: var(--color-danger);
+  }
+}
+
+.detail-actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.btn-edit-account,
+.btn-delete-account {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.btn-edit-account {
+  background: transparent;
+  color: var(--stone-500);
+
+  &:hover {
+    color: var(--slate-800);
+    background: var(--stone-100);
+    border-color: var(--stone-300);
+  }
+}
+
+.btn-delete-account {
+  background: transparent;
+  color: var(--stone-300);
+
+  &:hover {
+    color: var(--color-danger);
+    background: var(--color-danger-bg);
+    border-color: var(--color-danger-bg);
+  }
+}
+
+// ─── Edit form inside account card ────────────────────────────────────────────
+.edit-form {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-4);
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-muted);
+
+    input,
+    select {
+      padding: var(--space-2) var(--space-3);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-sm);
+      font-size: 0.875rem;
+      font-family: var(--font-sans);
+      color: var(--slate-800);
+      background: var(--color-bg-card);
+      outline: none;
+      transition: border-color 0.15s;
+
+      &:focus {
+        border-color: var(--color-info);
+      }
+    }
+
+    select {
+      cursor: pointer;
+    }
+  }
+}
+
+.edit-actions {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-end;
+}
+
+// ─── Upload zone ────────────────────────────────────────────────────────────────
+.upload-zone-wrapper {
+  width: 100%;
+  max-width: 640px;
+  margin-bottom: var(--space-8);
+}
+
+.upload-zone {
+  border: 2px dashed var(--stone-300);
+  border-radius: var(--radius-lg);
+  padding: var(--space-10) var(--space-8);
+  background: var(--color-bg-card);
+  cursor: pointer;
+  text-align: center;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
+  outline: none;
+
+  &:hover,
+  &:focus {
+    border-color: var(--color-info);
+    background: var(--slate-50);
+  }
+
+  &.dragover {
+    border-color: var(--color-info);
+    background: var(--color-info-bg);
+    border-style: solid;
+  }
+
+  &.uploading {
+    pointer-events: none;
+    border-color: var(--stone-200);
+    background: var(--stone-50);
+  }
+}
+
+.upload-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.upload-icon {
+  color: var(--stone-400);
+  transition: color 0.2s;
+
+  .upload-zone:hover & {
+    color: var(--color-info);
+  }
+
+  .upload-zone.dragover & {
+    color: var(--color-info);
+  }
+}
+
+.upload-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--stone-700);
+}
+
+.upload-sublabel {
+  font-size: 0.8rem;
+  color: var(--stone-400);
+}
+
+// Loading spinner
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--stone-200);
+  border-top-color: var(--stone-600);
+  border-radius: 50%;
+  animation: spin-import 0.8s linear infinite;
+}
+
+@keyframes spin-import {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Feedback messages (error / success)
+.upload-feedback {
+  margin-top: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 500;
+
+  &--success {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+    border: 1px solid var(--color-success-bg);
+  }
+}
+
+// ─── Timeline section ───────────────────────────────────────────────────────────
+.timeline-section {
+  width: 100%;
+  max-width: 640px;
+}
+
+.section-label {
+  margin: 0 0 var(--space-4);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--stone-500);
+}
+
+// ─── Empty state ────────────────────────────────────────────────────────────────
+.empty-state {
+  text-align: center;
+  padding: var(--space-10) var(--space-4);
+  color: var(--stone-400);
+
+  svg {
+    margin-bottom: var(--space-4);
+    opacity: 0.4;
+  }
+
+  p {
+    margin: 0 0 var(--space-1);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--stone-600);
+  }
+
+  span {
+    font-size: 0.8rem;
+  }
+}
+
+// ─── File cards ─────────────────────────────────────────────────────────────────
+.timeline {
+  display: flex;
+  flex-direction: column;
+}
+
+.file-card {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  box-shadow: var(--shadow-xs);
+  transition: box-shadow 0.15s;
+
+  &:hover {
+    box-shadow: var(--shadow-sm);
+  }
+
+  // Only space apart adjacent file cards (no gap between them).
+  // When a gap-connector follows, the line should touch the card edge.
+  & + & {
+    margin-top: var(--space-1);
+  }
+}
+
+.file-icon-col {
+  color: var(--stone-400);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.file-info {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.file-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--slate-800);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: var(--space-1);
+}
+
+.file-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--stone-500);
+}
+
+.file-range {
+  font-weight: 500;
+  color: var(--stone-700);
+}
+
+.file-count {
+  color: var(--stone-500);
+}
+
+.file-dupes {
+  color: var(--stone-400);
+  font-style: italic;
+}
+
+.file-uploaded {
+  color: var(--stone-400);
+}
+
+.meta-sep {
+  color: var(--stone-300);
+  user-select: none;
+}
+
+.file-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+// Status badge
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+
+  &--success {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+  }
+}
+
+.btn-delete-file {
+  background: none;
+  border: none;
+  color: var(--stone-300);
+  cursor: pointer;
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+
+  &:hover {
+    color: var(--color-danger);
+    background: var(--color-danger-bg);
+  }
+}
+
+// ─── Gap connector (the vertical line between entries) ─────────────────────────
+.gap-connector {
+  display: flex;
+  justify-content: center;
+  height: 26px;
+}
+
+.connector-line {
+  width: 2px;
+  height: 100%;
+  background: var(--stone-200);
+}
+
+// ─── Gap warning card ────────────────────────────────────────────────────────────
+.gap-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: #fffbeb; // warm amber tint
+  border: 1px solid #fde68a; // amber-200
+  border-radius: var(--radius-md);
+}
+
+.gap-warning-icon {
+  color: #d97706; // amber-600
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.gap-text {
+  flex-grow: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gap-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #92400e; // amber-800
+}
+
+.gap-range {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #78350f; // amber-900
+}
+
+.gap-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.gap-upload-btn {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-info);
+  background: var(--color-info-bg);
+  border: 1px solid transparent;
+  padding: 5px var(--space-3);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+
+  &:hover {
+    background: #bbdefb;
+    border-color: var(--color-info);
+  }
+}
+
+.gap-dismiss-btn {
+  background: none;
+  border: none;
+  color: #92400e;
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 5px 7px;
+  border-radius: var(--radius-sm);
+  opacity: 0.5;
+  transition: opacity 0.15s;
+  line-height: 1;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+// ─── Modal (new account prompt) ────────────────────────────────────────────────
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: var(--z-overlay);
+  padding: var(--space-4);
+}
+
+.modal-card {
+  background: var(--color-bg-card);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-8);
+  width: 100%;
+  max-width: 480px;
+  text-align: left;
+
+  h3 {
+    margin: 0 0 var(--space-2);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-text);
+  }
+}
+
+.modal-desc {
+  margin: 0 0 var(--space-5);
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.modal-field {
+  margin-bottom: var(--space-4);
+
+  label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-1);
+  }
+
+  input,
+  select {
+    width: 100%;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--slate-200);
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    font-family: var(--font-sans);
+    color: var(--slate-800);
+    background: var(--color-bg-card);
+    outline: none;
+    transition: border-color 0.15s;
+    box-sizing: border-box;
+
+    &:focus {
+      border-color: var(--color-info);
+    }
+
+    &.readonly {
+      background: var(--stone-100);
+      color: var(--stone-500);
+      cursor: default;
+    }
+  }
+
+  select {
+    cursor: pointer;
+  }
+}
+
+.modal-actions {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: flex-end;
+  margin-top: var(--space-5);
+}
+
+// ─── Responsive ────────────────────────────────────────────────────────────────
+@media (max-width: 680px) {
+  .account-container {
+    padding: calc(var(--header-height) + var(--space-5)) var(--space-3) var(--space-8);
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .account-selector-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .account-detail-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-4);
+  }
+
+  .detail-balance {
+    align-items: flex-start;
+  }
+
+  .detail-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .edit-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .edit-actions {
+    justify-content: flex-end;
+  }
+
+  .upload-zone {
+    padding: var(--space-8) var(--space-4);
+  }
+
+  .file-card {
+    padding: var(--space-3) var(--space-3);
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .file-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .meta-sep {
+    display: none;
+  }
+
+  .file-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .gap-card {
+    flex-wrap: wrap;
+  }
+
+  .gap-actions {
+    width: 100%;
+  }
+
+  .modal-card {
+    padding: var(--space-5);
+    max-width: none;
+    margin: var(--space-3);
+  }
+}

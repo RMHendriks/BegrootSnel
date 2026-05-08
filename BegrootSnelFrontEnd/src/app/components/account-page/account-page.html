@@ -1,0 +1,313 @@
+<div class="account-container">
+  <!-- ── Page header ───────────────────────────────────────────────────── -->
+  <div class="account-header">
+    <h2>Rekeningen &amp; Importeren</h2>
+    <p class="account-subtitle">Beheer rekeningen en importeer .TAB bankbestanden</p>
+  </div>
+
+  @if (error) {
+  <div class="error-banner" (click)="error = null">{{ error }} <span class="dismiss">✕</span></div>
+  }
+
+  <!-- ── Account selector ──────────────────────────────────────────────── -->
+  <div class="account-selector-bar">
+    <select
+      class="account-select"
+      [(ngModel)]="selectedAccountId"
+      (ngModelChange)="onAccountChanged()"
+    >
+      <option [ngValue]="null">-- Selecteer een rekening --</option>
+      @for (acc of accounts; track acc.id) {
+      <option [ngValue]="acc.id">{{ acc.name }} · {{ acc.accountNumber }}</option>
+      }
+    </select>
+    <button class="btn-add" (click)="startAddAccount()">+ Nieuwe rekening</button>
+  </div>
+
+  <!-- ── Add account form ──────────────────────────────────────────────── -->
+  @if (showAddAccount) {
+  <div class="form-card">
+    <h3>Nieuwe rekening</h3>
+    <div class="form-row">
+      <label
+        >Rekeningnummer
+        <input type="text" [(ngModel)]="addForm.accountNumber" placeholder="Bijv. 123456789"
+      /></label>
+      <label
+        >Naam <input type="text" [(ngModel)]="addForm.name" placeholder="Bijv. Spaarrekening"
+      /></label>
+      <label
+        >Type
+        <select [(ngModel)]="addForm.type">
+          <option value="PAYMENT">Betaalrekening</option>
+          <option value="SAVINGS">Spaarrekening</option>
+        </select>
+      </label>
+    </div>
+    <div class="form-actions">
+      <button class="btn-save" (click)="submitAddAccount()">Toevoegen</button>
+      <button class="btn-cancel" (click)="cancelAddAccount()">Annuleren</button>
+    </div>
+  </div>
+  }
+
+  <!-- ── Hidden file input ─────────────────────────────────────────────── -->
+  <input
+    #fileInput
+    type="file"
+    accept=".TAB,.tab"
+    (change)="onFileSelected($event)"
+    style="display: none"
+  />
+
+  <!-- ── Upload zone (always visible — detects new accounts from .TAB) ── -->
+  <div class="upload-zone-wrapper">
+    <div
+      class="upload-zone"
+      [class.dragover]="isDragOver"
+      [class.uploading]="isUploading"
+      (dragover)="onDragOver($event)"
+      (dragleave)="onDragLeave($event)"
+      (drop)="onDrop($event)"
+      (click)="openPicker()"
+      role="button"
+      tabindex="0"
+      (keydown.enter)="openPicker()"
+      aria-label="Bestand uploaden"
+    >
+      @if (isUploading) {
+      <div class="upload-state">
+        <div class="spinner"></div>
+        <span class="upload-label">Bestand wordt verwerkt…</span>
+      </div>
+      } @else {
+      <div class="upload-state">
+        <svg
+          class="upload-icon"
+          xmlns="http://www.w3.org/2000/svg"
+          width="36"
+          height="36"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="17 8 12 3 7 8" />
+          <line x1="12" y1="3" x2="12" y2="15" />
+        </svg>
+        <span class="upload-label">Sleep een .TAB bestand hierheen</span>
+        <span class="upload-sublabel">
+          @if (selectedAccount) { of klik om een bestand te selecteren voor {{ selectedAccount.name
+          }} } @else { of klik om te selecteren — een onbekend rekeningnummer wordt automatisch
+          herkend }
+        </span>
+      </div>
+      }
+    </div>
+
+    @if (lastUploaded && !isUploading) {
+    <div class="upload-feedback upload-feedback--success">
+      <span>✓ {{ lastUploaded }}</span>
+    </div>
+    }
+  </div>
+
+  <!-- ── Selected account view ─────────────────────────────────────────── -->
+  @if (selectedAccount; as acc) {
+
+  <!-- Account details card -->
+  <div class="account-detail-card" [class.savings]="acc.type === 'SAVINGS'">
+    @if (isEditingAccount) {
+    <div class="edit-form">
+      <label>Naam <input type="text" [(ngModel)]="editForm.name" /></label>
+      <label
+        >Type
+        <select [(ngModel)]="editForm.type">
+          <option value="PAYMENT">Betaalrekening</option>
+          <option value="SAVINGS">Spaarrekening</option>
+        </select>
+      </label>
+      <div class="edit-actions">
+        <button class="btn-save" (click)="saveEditAccount()">Opslaan</button>
+        <button class="btn-cancel" (click)="cancelEditAccount()">Annuleren</button>
+      </div>
+    </div>
+    } @else {
+    <div class="account-detail-info">
+      <div>
+        <div class="detail-name">{{ acc.name }}</div>
+        <div class="detail-meta">
+          <span>{{ acc.accountNumber }}</span>
+          <span class="meta-sep">·</span>
+          <span [class.savings-badge]="acc.type === 'SAVINGS'">{{ getTypeLabel(acc.type) }}</span>
+        </div>
+      </div>
+      <div class="detail-balance">
+        <span class="balance-label">Saldo</span>
+        <span class="balance-value" [class.negative]="(acc.currentBalance || 0) < 0">
+          {{ (acc.currentBalance || 0) | currency:'EUR' }}
+        </span>
+      </div>
+      <div class="detail-actions">
+        <button class="btn-edit-account" (click)="startEditAccount()">Bewerken</button>
+        <button class="btn-delete-account" (click)="deleteAccount()">Verwijderen</button>
+      </div>
+    </div>
+    }
+  </div>
+
+  <!-- Timeline -->
+  <div class="timeline-section">
+    <h3 class="section-label">Geüploade bestanden voor {{ acc.name }}</h3>
+
+    @if (files.length === 0 && !isUploading) {
+    <div class="empty-state">
+      <p>Nog geen bestanden geüpload voor deze rekening</p>
+      <span>Upload een .TAB bestand om te beginnen</span>
+    </div>
+    } @else {
+    <div class="timeline">
+      @for (entry of timeline; track $index) { @if (entry.kind === 'file') {
+      <div class="file-card">
+        <div class="file-icon-col">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+            <polyline points="13 2 13 9 20 9" />
+          </svg>
+        </div>
+        <div class="file-info">
+          <div class="file-name">{{ entry.file!.filename }}</div>
+          <div class="file-meta">
+            <span class="file-range"
+              >{{ formatDateShort(entry.file!.startDate) }} &ndash; {{
+              formatDateShort(entry.file!.endDate) }}</span
+            >
+            <span class="meta-sep">·</span>
+            <span class="file-count">{{ entry.file!.transactionCount }} transacties</span>
+            @if (entry.file!.duplicateCount > 0) {
+            <span class="meta-sep">·</span>
+            <span class="file-dupes">{{ entry.file!.duplicateCount }} dupl. overgeslagen</span>
+            }
+            <span class="meta-sep">·</span>
+            <span class="file-uploaded">{{ formatDate(entry.file!.uploadedAt) }}</span>
+          </div>
+        </div>
+        <div class="file-actions">
+          <span class="status-badge status-badge--success">✓ Geïmporteerd</span>
+          <button
+            class="btn-delete-file"
+            (click)="deleteFile(entry.file!, $event)"
+            title="Verwijder dit bestand"
+            aria-label="Bestand verwijderen"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+              <path d="M10 11v6M14 11v6" />
+              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      } @if (entry.kind === 'gap') {
+      <div class="gap-connector"><div class="connector-line"></div></div>
+      <div class="gap-card">
+        <div class="gap-warning-icon">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path
+              d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+            />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+        </div>
+        <div class="gap-text">
+          <span class="gap-label">Ontbrekende periode</span>
+          <span class="gap-range"
+            >{{ formatDateShort(entry.gap!.from) }} – {{ formatDateShort(entry.gap!.to) }}</span
+          >
+        </div>
+        <div class="gap-actions">
+          <button class="gap-upload-btn" (click)="openPicker()">+ Upload bestand</button>
+          <button
+            class="gap-dismiss-btn"
+            (click)="dismissGap(entry.gap!)"
+            title="Sluiten"
+            aria-label="Gap melding sluiten"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
+      <div class="gap-connector"><div class="connector-line"></div></div>
+      } }
+    </div>
+    }
+  </div>
+  }
+
+  <!-- ── New account prompt modal ──────────────────────────────────────── -->
+  @if (showNewAccountPrompt) {
+  <div class="modal-backdrop" (click)="cancelNewAccount()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <h3>Nieuwe rekening gedetecteerd</h3>
+      <p class="modal-desc">
+        Het .TAB bestand bevat transacties voor een onbekend rekeningnummer. Stel deze rekening in
+        voordat de import start.
+      </p>
+      <div class="modal-field">
+        <label>Rekeningnummer</label>
+        <input type="text" [ngModel]="detectedAccountNumber" readonly class="readonly" />
+      </div>
+      <div class="modal-field">
+        <label>Naam</label>
+        <input type="text" [(ngModel)]="newAccountForm.name" placeholder="Bijv. Spaarrekening" />
+      </div>
+      <div class="modal-field">
+        <label>Type</label>
+        <select [(ngModel)]="newAccountForm.type">
+          <option value="PAYMENT">Betaalrekening</option>
+          <option value="SAVINGS">Spaarrekening</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-save" (click)="confirmNewAccount()">Aanmaken &amp; Importeren</button>
+        <button class="btn-cancel" (click)="cancelNewAccount()">Annuleren</button>
+      </div>
+    </div>
+  </div>
+  }
+</div>
