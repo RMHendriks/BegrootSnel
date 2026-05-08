@@ -4,30 +4,27 @@
 }
 
 .app-header {
-  background: #f5f5f4;
-  border-bottom: 1px solid #e7e5e4;
-  height: 56px;
+  background: var(--stone-100);
+  border-bottom: 1px solid var(--stone-200);
+  height: var(--header-height);
   width: 100%;
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
+  top: 0; left: 0; right: 0;
+  z-index: var(--z-header);
 }
 
 .header-content {
   height: 100%;
-  padding: 0 20px;
+  padding: 0 var(--space-5);
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-/* Brand sectie: Logo en Tekst naast elkaar */
 .brand {
   display: flex;
   align-items: center;
-  gap: 10px; /* Ruimte tussen logo en tekst */
+  gap: 10px;
 }
 
 .logo-wrapper {
@@ -38,13 +35,13 @@
 }
 
 .logo-svg {
-  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15));
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15));
 }
 
 .brand-name {
   margin: 0;
   font-weight: 700;
-  color: #44403c;
+  color: var(--stone-700);
   font-size: 1.1rem;
   letter-spacing: -0.025em;
   line-height: 1;
@@ -52,10 +49,10 @@
 
 .brand-accent {
   font-weight: 300;
-  color: #78716c;
+  color: var(--stone-500);
 }
 
-/* Navigatie en overige styles blijven exact hetzelfde zoals je wilde */
+// ─── Desktop nav ───────────────────────────────────────────────────────────────
 .main-nav {
   display: flex;
   height: 100%;
@@ -65,46 +62,150 @@
   height: 100%;
   display: flex;
   align-items: center;
-  padding: 0 20px;
+  padding: 0 var(--space-5);
   text-decoration: none;
-  color: #78716c;
+  color: var(--stone-500);
   font-size: 0.85rem;
   font-weight: 500;
   border-bottom: 3px solid transparent;
   transition: all 0.2s;
   cursor: pointer;
+
+  &:hover {
+    background: var(--stone-200);
+    color: var(--stone-700);
+  }
+
+  &.active {
+    color: var(--stone-700);
+    border-bottom-color: var(--stone-500);
+    background: var(--stone-200);
+  }
 }
 
-.nav-item:hover {
-  background: #edeceb;
-  color: #44403c;
-}
-
-.nav-item.active {
-  color: #44403c;
-  border-bottom-color: #78716c;
-  background: #edeceb;
+// ─── Actions (sync + hamburger) ────────────────────────────────────────────────
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .btn-sync {
-  background: #fff;
-  border: 1px solid #d6d3d1;
+  background: var(--color-bg-card);
+  border: 1px solid var(--stone-300);
   padding: 6px 14px;
-  border-radius: 4px;
-  color: #44403c;
+  border-radius: var(--radius-sm);
+  color: var(--stone-700);
   font-weight: 600;
   font-size: 0.8rem;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   cursor: pointer;
-}
 
-.btn-sync.syncing svg {
-  animation: spin 0.8s linear infinite;
+  &.syncing svg {
+    animation: spin 0.8s linear infinite;
+  }
 }
 
 @keyframes spin {
   from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  to   { transform: rotate(360deg); }
+}
+
+// ─── Hamburger button (hidden on desktop) ─────────────────────────────────────
+.hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  border: 1px solid var(--stone-200);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s;
+
+  span {
+    display: block;
+    width: 16px;
+    height: 2px;
+    background: var(--stone-600);
+    border-radius: 2px;
+    transition: all 0.25s ease;
+    transform-origin: center;
+  }
+
+  &:hover { background: var(--stone-200); }
+
+  // Animate to an X when open
+  &.is-open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  &.is-open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+  &.is-open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+}
+
+// ─── Mobile nav panel ─────────────────────────────────────────────────────────
+.mobile-nav {
+  display: none; // hidden on desktop
+}
+
+// ─── Backdrop ─────────────────────────────────────────────────────────────────
+.nav-backdrop {
+  display: none; // hidden on desktop
+}
+
+// ─── Mobile breakpoint ────────────────────────────────────────────────────────
+@media (max-width: 640px) {
+  .main-nav   { display: none; }  // hide desktop nav
+  .sync-label { display: none; }  // icon-only sync button
+  .hamburger  { display: flex; }  // show hamburger
+
+  // Slide-down mobile nav
+  .mobile-nav {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: var(--header-height);
+    left: 0;
+    right: 0;
+    background: var(--stone-100);
+    border-bottom: 1px solid var(--stone-200);
+    box-shadow: var(--shadow-md);
+    z-index: var(--z-header);
+    // Start hidden (zero height, no overflow)
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.25s ease;
+
+    &.is-open {
+      max-height: 200px; // enough for 3 items
+    }
+  }
+
+  .mobile-nav-item {
+    display: block;
+    padding: 14px var(--space-5);
+    color: var(--stone-700);
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    border-bottom: 1px solid var(--stone-200);
+    transition: background 0.1s;
+
+    &:last-child { border-bottom: none; }
+    &:hover, &.active { background: var(--stone-200); }
+  }
+
+  // Semi-transparent backdrop
+  .nav-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    top: var(--header-height);
+    background: rgba(0, 0, 0, 0.2);
+    z-index: calc(var(--z-header) - 1);
+  }
 }

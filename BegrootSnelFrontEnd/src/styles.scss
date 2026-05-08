@@ -1,105 +1,241 @@
+// ============================================================
+// BegrootSnel — Global Design System
+// ============================================================
+
+
+// ============================================================
+// 1. DESIGN TOKENS
+// ============================================================
 :root {
-  --bg-main: #f4f7f6;
-  --bg-card: #ffffff;
-  --border-color: #e2e8f0;
-  --text-main: #1e293b;
-  --text-muted: #64748b;
-  --radius-lg: 12px;
-  --radius-md: 8px;
+  // Color Palette — Stone (app chrome: header, backgrounds, borders)
+  // This is the primary palette; the "brand" feel of the app.
+  --stone-50:  #fafaf9;
+  --stone-100: #f5f5f4;
+  --stone-200: #e7e5e4;
+  --stone-300: #d6d3d1;
+  --stone-400: #a8a29e;
+  --stone-500: #78716c;
+  --stone-600: #57534e;
+  --stone-700: #44403c;
+  --stone-800: #292524;
+  --stone-900: #1c1917;
+
+  // Color Palette — Slate (data content: transaction text, tags, tables)
+  // Used intentionally for financial data to give it a crisp, neutral feel.
+  --slate-50:  #f8fafc;
+  --slate-100: #f1f5f9;
+  --slate-200: #e2e8f0;
+  --slate-300: #cbd5e1;
+  --slate-400: #94a3b8;
+  --slate-500: #64748b;
+  --slate-600: #475569;
+  --slate-700: #334155;
+  --slate-800: #1e293b;
+  --slate-900: #0f172a;
+
+  // --- Semantic Aliases ---
+  // Components reference these, not raw palette values.
+  --color-bg-app:       var(--stone-50);
+  --color-bg-card:      #ffffff;
+  --color-bg-subtle:    var(--stone-100);
+  --color-border:       var(--stone-200);
+  --color-border-mid:   var(--stone-300);
+
+  --color-text:           var(--stone-900);
+  --color-text-secondary: var(--stone-700);
+  --color-text-muted:     var(--stone-500);
+  --color-text-faint:     var(--stone-400);
+
+  // State colors
+  --color-danger:     #dc2626;
+  --color-danger-bg:  #fee2e2;
+  --color-success:    #15803d;
+  --color-success-bg: #dcfce7;
+  --color-info:       #1976d2;
+  --color-info-bg:    #e3f2fd;
+  --color-indigo:     #4338ca;
+
+  // --- Spacing Scale ---
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+
+  // --- Border Radii ---
+  --radius-sm:   4px;
+  --radius-md:   8px;
+  --radius-lg:   12px;
+  --radius-xl:   16px;
+  --radius-pill: 9999px;
+
+  // --- Shadows ---
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+
+  // --- Typography ---
+  --font-sans:  'Inter', system-ui, sans-serif;
+  --font-mono:  'Monaco', 'Consolas', monospace;
+  --font-serif: Georgia, serif;
+
+  // --- App Structure ---
+  --header-height:     56px;
+  --content-width:     65%;
+  --content-min-width: 750px;
+
+  // --- Z-index Scale ---
+  --z-header:  1000;
+  --z-overlay: 2000;
 }
 
+
+// ============================================================
+// 2. BASE
+// ============================================================
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background-color: var(--color-bg-app);
+  color: var(--color-text);
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 10px; }
+
+
+// ============================================================
+// 3. LAYOUT
+// ============================================================
+
+// Main page wrapper (used by transactions-page)
 .transaction-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 40px;
-  background-color: var(--bg-main);
+  padding: var(--space-10);
+  background-color: var(--color-bg-app);
   min-height: 100vh;
 }
 
-/* De vaste breedte op één plek */
+// Constrained content column
 .content-width {
-  width: 65%;
-  min-width: 750px;
+  width: var(--content-width);
+  min-width: var(--content-min-width);
+
+  @media (max-width: 900px) {
+    width: 90%;
+    min-width: 0;
+  }
+
+  @media (max-width: 600px) {
+    width: 100%;
+    min-width: 0;
+  }
 }
 
+// Month section divider
 .month-divider {
   display: flex;
   align-items: center;
   text-align: center;
-  margin: 28px 0 12px 0;
-  /* Geen @extend meer, breedte regelen we in HTML */
+  margin: 28px 0 12px;
 
   &::before, &::after {
     content: '';
     flex: 1;
-    border-bottom: 1px solid #cbd5e1;
+    border-bottom: 1px solid var(--color-border);
   }
 
   span {
-    padding: 0 20px;
+    padding: 0 var(--space-5);
     font-size: 0.85rem;
     font-weight: 700;
-    color: var(--text-muted);
+    color: var(--color-text-muted);
     text-transform: uppercase;
     letter-spacing: 0.1em;
   }
 }
 
-.unit {
-  font-size: 0.85rem;
-  color: #64748b;
-}
 
-:root {
-  --bg-main: #f4f7f6;
-  --bg-card: #ffffff;
-  --border-color: #e2e8f0;
-  --text-main: #1e293b;
-  --text-muted: #64748b;
-  --radius-lg: 12px;
-  --radius-md: 8px;
-}
+// ============================================================
+// 4. MODALS & OVERLAYS
+// ============================================================
 
-.transaction-container {
+// Full-screen blurred backdrop
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  padding: 40px;
-  background-color: var(--bg-main);
-  min-height: 100vh;
+  z-index: var(--z-overlay);
+
+  // Variant: modal appears near the top (e.g. command palette)
+  &.overlay--top {
+    align-items: flex-start;
+    padding-top: 15vh;
+  }
 }
 
-/* De vaste breedte op één plek */
-.content-width {
-  width: 65%;
-  min-width: 750px;
+// The white panel inside an overlay
+.modal-box {
+  background: var(--color-bg-card);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  height: fit-content;
 }
 
-.month-divider {
-  display: flex;
-  align-items: center;
+
+// ============================================================
+// 5. BADGES
+// ============================================================
+
+.badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 50px;
   text-align: center;
-  margin: 28px 0 12px 0;
-  /* Geen @extend meer, breedte regelen we in HTML */
+  line-height: 1.2;
 
-  &::before, &::after {
-    content: '';
-    flex: 1;
-    border-bottom: 1px solid #cbd5e1;
-  }
-
-  span {
-    padding: 0 20px;
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-  }
+  &-danger  { background: var(--color-danger-bg);  color: var(--color-danger); }
+  &-success { background: var(--color-success-bg); color: var(--color-success); }
+  &-neutral { background: var(--stone-100);        color: var(--stone-400); font-weight: 500; }
 }
+
+.total-badge {
+  background: var(--stone-700);
+  color: #ffffff;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+
+// ============================================================
+// 6. UTILITIES
+// ============================================================
+
+.text-danger  { color: var(--color-danger)      !important; }
+.text-success { color: var(--color-success)     !important; }
+.text-indigo  { color: var(--color-indigo)      !important; }
+.text-muted   { color: var(--color-text-muted)  !important; }
+.tabular-nums { font-variant-numeric: tabular-nums; }
 
 .unit {
   font-size: 0.85rem;
-  color: #64748b;
+  color: var(--color-text-muted);
 }
