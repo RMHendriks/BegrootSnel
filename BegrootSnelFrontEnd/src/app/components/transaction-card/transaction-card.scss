@@ -1,34 +1,16 @@
-/* --- Basis Container & Kaarten --- */
-.transaction-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 40px;
-  background-color: #f4f7f6;
-  min-height: 100vh;
-}
-
-.date {
-  font-size: 0.85rem;
-  color: #64748b;
-}
-
-.main-title {
-  font-size: 1.05rem;
-  color: #1e293b;
-  font-weight: 700;
-  text-transform: capitalize; /* Maakt rauwe caps leesbaar */
+.transaction-group {
+  width: 100%;
 }
 
 .transaction-card {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 24px;
-  background: #fff;
-  border-radius: 12px;
+  padding: var(--space-4) var(--space-6);
+  background: var(--color-bg-card);
+  border-radius: var(--radius-lg);
   border-left: 6px solid #ccc;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); 
+  box-shadow: var(--shadow-md);
   cursor: pointer;
   position: relative;
   z-index: 2;
@@ -38,64 +20,96 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  flex: 1; /* Neemt resterende ruimte in */
+  flex: 1;
+  min-width: 0;
 }
 
-.transaction-actions {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  margin-left: 24px;
+.date {
+  font-size: 0.85rem;
+  color: var(--slate-500);
 }
 
-/* De 'Selecteer categorie' knop styling herstellen */
-.category-trigger {
-  background: #ffffff;
-  width: 240px;
-  height: 42px;
-  padding: 0 14px;
-  border: 1px solid var(--border-color);
-  border-left: 4px solid #ccc; 
-  border-radius: var(--radius-md);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
-  
-  .category-text {
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: #334155;
-  }
+.main-title {
+  font-size: 1.05rem;
+  color: var(--slate-800);
+  font-weight: 700;
+  text-transform: capitalize;
 }
 
 .amount-section {
-  border-left: 1px solid var(--border-color); 
-  padding-left: 24px;
+  border-left: 1px solid var(--color-border);
+  padding-left: var(--space-6);
   min-width: 140px;
   display: flex;
-  justify-content: flex-end;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-1);
 }
 
 .amount {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
   font-weight: 800;
   font-size: 1.1rem;
-  color: #0f172a;
-  &.negative { color: #dc2626; }
+  color: var(--slate-900);
+
+  &.negative {
+    color: var(--color-danger);
+  }
 }
 
-/* --- Collapsable Raw Data Box --- */
+// ─── Account badge (below title, left side, subtle) ────────────────────────
+.account-badge {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--stone-400);
+  margin-top: 1px;
+
+  &.savings {
+    color: #065f46;
+    font-weight: 600;
+  }
+}
+
+// ─── Transfer indicator (replaces split manager for internal transfers) ────
+.transfer-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+
+  .transfer-icon {
+    font-size: 1rem;
+    color: #d97706;
+  }
+
+  .transfer-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #92400e;
+  }
+
+  .transfer-detail {
+    font-size: 0.68rem;
+    font-weight: 400;
+    color: var(--stone-400);
+  }
+}
+
+// Expandable raw data section
 .raw-data-box {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--color-bg-card);
+  border: 1px solid var(--slate-200);
   border-top: none;
-  border-radius: 0 0 12px 12px;
-  padding: 16px 24px;
-  margin: -4px 12px 0 12px; 
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  padding: var(--space-4) var(--space-6);
+  margin: -4px 12px 0;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.03);
   position: relative;
-  z-index: 1; 
+  z-index: 1;
   animation: slideDown 0.2s ease-out;
 }
 
@@ -103,24 +117,59 @@
   font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
-  color: #94a3b8;
-  margin-bottom: 8px;
+  color: var(--slate-400);
+  margin-bottom: var(--space-2);
   letter-spacing: 0.5px;
 }
 
 .raw-data-content {
-  font-family: 'Monaco', 'Consolas', monospace;
+  font-family: var(--font-mono);
   font-size: 0.8rem;
-  color: #475569;
+  color: var(--slate-600);
   line-height: 1.4;
   word-break: break-all;
-  background: #f8fafc;
-  padding: 12px;
+  background: var(--slate-50);
+  padding: var(--space-3);
   border-radius: 6px;
-  border: 1px solid #f1f5f9;
+  border: 1px solid var(--slate-100);
 }
 
 @keyframes slideDown {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ─── Responsive ────────────────────────────────────────────────────────────────
+@media (max-width: 640px) {
+  .transaction-card {
+    padding: var(--space-3);
+    gap: var(--space-2);
+  }
+
+  .main-title {
+    font-size: 0.9rem;
+  }
+  .date {
+    font-size: 0.75rem;
+  }
+
+  .amount-section {
+    padding-left: var(--space-3);
+    min-width: 80px;
+  }
+
+  .amount {
+    font-size: 0.95rem;
+  }
+
+  .raw-data-box {
+    padding: var(--space-3);
+    margin: -4px 4px 0;
+  }
 }

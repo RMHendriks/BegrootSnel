@@ -1,30 +1,49 @@
 <div class="transaction-group">
-      <div class="transaction-card" 
-           [style.background]="getCardBackground()" 
-           [style.border-left]="'none'"
-           (click)="isExpanded = !isExpanded">
-
-        <div class="transaction-info">
-          <div class="date">{{ transaction.transactionDate }}</div>
-          <strong class="main-title">{{ transaction.prettyTitle }}</strong>
-        </div>
-
-        <app-transaction-split-manager 
-           [transaction]="transaction"
-           (requestCategory)="onRequestCategory($event)">
-        </app-transaction-split-manager>
-
-        <div class="amount-section">
-          <div class="amount" [class.negative]="transaction.mutation < 0">
-            € {{ transaction.mutation | number: '1.2-2' }}
-          </div>
-        </div>
-      </div>
-
-      @if (isExpanded) {
-        <div class="raw-data-box">
-          <div class="raw-data-header">Ruwe Transactie Data</div>
-          <div class="raw-data-content">{{ transaction.description }}</div>
-        </div>
+  <div
+    class="transaction-card"
+    [class.internal-transfer]="transaction.internalTransfer"
+    [style.background]="getCardBackground()"
+    [style.border-left]="'none'"
+    (click)="isExpanded = !isExpanded"
+  >
+    <div class="transaction-info">
+      <div class="date">{{ transaction.transactionDate }}</div>
+      <strong class="main-title">{{ transaction.prettyTitle }}</strong>
+      @if (transaction.account) {
+      <span class="account-badge" [class.savings]="transaction.account.type === 'SAVINGS'">
+        {{ transaction.account.name }} · {{ transaction.account.accountNumber }}
+      </span>
       }
     </div>
+
+    @if (transaction.internalTransfer) {
+    <!-- Auto-assigned: internal transfers need no category -->
+    <div class="transfer-indicator">
+      <span class="transfer-icon">↔</span>
+      <span class="transfer-label">Interne overboeking</span>
+      @if (transaction.counterpartyAccountNumber) {
+      <span class="transfer-detail">naar {{ transaction.counterpartyAccountNumber }}</span>
+      }
+    </div>
+    } @else {
+    <app-transaction-split-manager
+      [transaction]="transaction"
+      (requestCategory)="onRequestCategory($event)"
+    >
+    </app-transaction-split-manager>
+    }
+
+    <div class="amount-section">
+      <div class="amount" [class.negative]="transaction.mutation < 0">
+        € {{ transaction.mutation | number: '1.2-2' }}
+      </div>
+    </div>
+  </div>
+
+  @if (isExpanded) {
+  <div class="raw-data-box">
+    <div class="raw-data-header">Ruwe Transactie Data</div>
+    <div class="raw-data-content">{{ transaction.description }}</div>
+  </div>
+  }
+</div>
