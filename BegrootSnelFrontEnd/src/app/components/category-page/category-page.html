@@ -1,4 +1,351 @@
-<br>
-<br>
-<br>
-<p>category-page works!</p>
+<div class="category-container">
+  <div class="category-header">
+    <h2>Categorieën</h2>
+  </div>
+
+  <div class="category-manager">
+    <!-- ═══════════════════════════════════════════════════
+         COLUMN 1 — ROOTS  (level 0)
+    ════════════════════════════════════════════════════ -->
+    <div class="category-column">
+      <div class="column-header">
+        <div class="column-header-left">
+          <span class="column-title">Roots</span>
+          <span class="total-badge">{{ roots.length }}</span>
+        </div>
+        <button class="col-add-btn" [disabled]="addingAtLevel === 0" (click)="startAdd(0)">
+          + Nieuw
+        </button>
+      </div>
+
+      <div class="column-body">
+        @for (root of roots; track root.id) {
+
+        <!-- Inline edit form -->
+        @if (editingId === root.id) {
+        <div class="item-form-row" (click)="$event.stopPropagation()">
+          <div class="form-fields">
+            <div class="form-name-row">
+              <span class="color-dot" [style.background-color]="editColor"></span>
+              <input
+                class="item-text-input"
+                [(ngModel)]="editName"
+                (keydown.enter)="saveEdit()"
+                (keydown.escape)="cancelEdit()"
+                placeholder="Naam..."
+                autofocus
+              />
+            </div>
+            <div class="color-picker-row">
+              @for (c of PRESET_COLORS; track c) {
+              <button
+                class="color-swatch"
+                [style.background-color]="c"
+                [class.active]="editColor === c"
+                (click)="pickEditColor(c)"
+                [attr.title]="c"
+              ></button>
+              }
+            </div>
+          </div>
+          <div class="row-actions">
+            <button class="btn-row-save" (click)="saveEdit()" [disabled]="!editName.trim()">
+              Opslaan
+            </button>
+            <button class="btn-row-cancel" (click)="cancelEdit()">Annuleer</button>
+          </div>
+        </div>
+
+        <!-- Delete confirmation -->
+        } @else if (deletingId === root.id) {
+        <div class="delete-confirm-row" (click)="$event.stopPropagation()">
+          @if (canDelete(root)) {
+          <span class="confirm-text">Verwijder "{{ root.name }}"?</span>
+          <button class="btn-confirm-yes" (click)="confirmDelete(root, $event)">Ja</button>
+          <button class="btn-confirm-no" (click)="cancelDelete($event)">Nee</button>
+          } @else {
+          <span class="confirm-text warn"
+            >Verwijder eerst alle groepen ({{ root.children?.length }})</span
+          >
+          <button class="btn-confirm-no" (click)="cancelDelete($event)">Sluiten</button>
+          }
+        </div>
+
+        <!-- Normal row -->
+        } @else {
+        <div
+          class="category-item"
+          [class.is-selected]="selectedRoot?.id === root.id"
+          (click)="selectRoot(root)"
+        >
+          <span class="color-dot" [style.background-color]="root.color || '#78716c'"></span>
+          <span class="item-name">{{ root.name }}</span>
+          <span class="item-child-count">{{ root.children?.length ?? 0 }}</span>
+          <div class="item-actions">
+            <button class="item-btn edit-btn" (click)="startEdit(root, $event)" title="Wijzigen">
+              ✏
+            </button>
+            <button
+              class="item-btn delete-btn"
+              (click)="requestDelete(root, $event)"
+              title="Verwijderen"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+        } }
+
+        <!-- Add root form -->
+        @if (addingAtLevel === 0) {
+        <div class="item-form-row adding" (click)="$event.stopPropagation()">
+          <div class="form-fields">
+            <div class="form-name-row">
+              <span class="color-dot" [style.background-color]="newColor"></span>
+              <input
+                class="item-text-input"
+                [(ngModel)]="newName"
+                (keydown.enter)="saveAdd()"
+                (keydown.escape)="cancelAdd()"
+                placeholder="Naam root categorie..."
+                autofocus
+              />
+            </div>
+            <div class="color-picker-row">
+              @for (c of PRESET_COLORS; track c) {
+              <button
+                class="color-swatch"
+                [style.background-color]="c"
+                [class.active]="newColor === c"
+                (click)="pickNewColor(c)"
+              ></button>
+              }
+            </div>
+          </div>
+          <div class="row-actions">
+            <button class="btn-row-save" (click)="saveAdd()" [disabled]="!newName.trim()">
+              Toevoegen
+            </button>
+            <button class="btn-row-cancel" (click)="cancelAdd()">Annuleer</button>
+          </div>
+        </div>
+        } @if (roots.length === 0 && addingAtLevel !== 0) {
+        <div class="column-empty-state">
+          <span>Geen roots — klik op + Nieuw</span>
+        </div>
+        }
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════
+         COLUMN 2 — GROUPS  (level 1)
+    ════════════════════════════════════════════════════ -->
+    <div class="category-column" [class.column-inactive]="!selectedRoot">
+      <div class="column-header">
+        <div class="column-header-left">
+          <span class="column-title">{{ selectedRoot ? selectedRoot.name : 'Groepen' }}</span>
+          @if (selectedRoot) {
+          <span class="total-badge">{{ groups.length }}</span>
+          }
+        </div>
+        <button
+          class="col-add-btn"
+          [disabled]="!selectedRoot || addingAtLevel === 1"
+          (click)="startAdd(1)"
+        >
+          + Nieuw
+        </button>
+      </div>
+
+      <div class="column-body">
+        @if (!selectedRoot) {
+        <div class="column-empty-state inactive">
+          <span class="empty-hint">← Selecteer een root</span>
+        </div>
+        } @else { @for (group of groups; track group.id) { @if (editingId === group.id) {
+        <div class="item-form-row" (click)="$event.stopPropagation()">
+          <div class="form-fields">
+            <div class="form-name-row">
+              <input
+                class="item-text-input"
+                [(ngModel)]="editName"
+                (keydown.enter)="saveEdit()"
+                (keydown.escape)="cancelEdit()"
+                placeholder="Naam groep..."
+                autofocus
+              />
+            </div>
+          </div>
+          <div class="row-actions">
+            <button class="btn-row-save" (click)="saveEdit()" [disabled]="!editName.trim()">
+              Opslaan
+            </button>
+            <button class="btn-row-cancel" (click)="cancelEdit()">Annuleer</button>
+          </div>
+        </div>
+
+        } @else if (deletingId === group.id) {
+        <div class="delete-confirm-row" (click)="$event.stopPropagation()">
+          @if (canDelete(group)) {
+          <span class="confirm-text">Verwijder "{{ group.name }}"?</span>
+          <button class="btn-confirm-yes" (click)="confirmDelete(group, $event)">Ja</button>
+          <button class="btn-confirm-no" (click)="cancelDelete($event)">Nee</button>
+          } @else {
+          <span class="confirm-text warn"
+            >Verwijder eerst alle categorieën ({{ group.children?.length }})</span
+          >
+          <button class="btn-confirm-no" (click)="cancelDelete($event)">Sluiten</button>
+          }
+        </div>
+
+        } @else {
+        <div
+          class="category-item"
+          [class.is-selected]="selectedGroup?.id === group.id"
+          (click)="selectGroup(group)"
+        >
+          <span class="item-name">{{ group.name }}</span>
+          <span class="item-child-count">{{ group.children?.length ?? 0 }}</span>
+          <div class="item-actions">
+            <button class="item-btn edit-btn" (click)="startEdit(group, $event)" title="Wijzigen">
+              ✏
+            </button>
+            <button
+              class="item-btn delete-btn"
+              (click)="requestDelete(group, $event)"
+              title="Verwijderen"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+        } } @if (addingAtLevel === 1) {
+        <div class="item-form-row adding" (click)="$event.stopPropagation()">
+          <div class="form-fields">
+            <div class="form-name-row">
+              <input
+                class="item-text-input"
+                [(ngModel)]="newName"
+                (keydown.enter)="saveAdd()"
+                (keydown.escape)="cancelAdd()"
+                placeholder="Naam groep..."
+                autofocus
+              />
+            </div>
+          </div>
+          <div class="row-actions">
+            <button class="btn-row-save" (click)="saveAdd()" [disabled]="!newName.trim()">
+              Toevoegen
+            </button>
+            <button class="btn-row-cancel" (click)="cancelAdd()">Annuleer</button>
+          </div>
+        </div>
+        } @if (groups.length === 0 && addingAtLevel !== 1) {
+        <div class="column-empty-state">
+          <span>Geen groepen — klik op + Nieuw</span>
+        </div>
+        } }
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════
+         COLUMN 3 — LEAVES  (level 2, assignable)
+    ════════════════════════════════════════════════════ -->
+    <div class="category-column" [class.column-inactive]="!selectedGroup">
+      <div class="column-header">
+        <div class="column-header-left">
+          <span class="column-title">{{ selectedGroup ? selectedGroup.name : 'Categorieën' }}</span>
+          @if (selectedGroup) {
+          <span class="total-badge">{{ leaves.length }}</span>
+          }
+        </div>
+        <button
+          class="col-add-btn"
+          [disabled]="!selectedGroup || addingAtLevel === 2"
+          (click)="startAdd(2)"
+        >
+          + Nieuw
+        </button>
+      </div>
+
+      <div class="column-body">
+        @if (!selectedGroup) {
+        <div class="column-empty-state inactive">
+          <span class="empty-hint">← Selecteer een groep</span>
+        </div>
+        } @else { @for (leaf of leaves; track leaf.id) { @if (editingId === leaf.id) {
+        <div class="item-form-row" (click)="$event.stopPropagation()">
+          <div class="form-fields">
+            <div class="form-name-row">
+              <input
+                class="item-text-input"
+                [(ngModel)]="editName"
+                (keydown.enter)="saveEdit()"
+                (keydown.escape)="cancelEdit()"
+                placeholder="Naam categorie..."
+                autofocus
+              />
+            </div>
+          </div>
+          <div class="row-actions">
+            <button class="btn-row-save" (click)="saveEdit()" [disabled]="!editName.trim()">
+              Opslaan
+            </button>
+            <button class="btn-row-cancel" (click)="cancelEdit()">Annuleer</button>
+          </div>
+        </div>
+
+        } @else if (deletingId === leaf.id) {
+        <div class="delete-confirm-row" (click)="$event.stopPropagation()">
+          <span class="confirm-text">Verwijder "{{ leaf.name }}"?</span>
+          <button class="btn-confirm-yes" (click)="confirmDelete(leaf, $event)">Ja</button>
+          <button class="btn-confirm-no" (click)="cancelDelete($event)">Nee</button>
+        </div>
+
+        } @else {
+        <div class="category-item" (click)="$event.stopPropagation()">
+          <span class="assignable-dot"></span>
+          <span class="item-name">{{ leaf.name }}</span>
+          <div class="item-actions">
+            <button class="item-btn edit-btn" (click)="startEdit(leaf, $event)" title="Wijzigen">
+              ✏
+            </button>
+            <button
+              class="item-btn delete-btn"
+              (click)="requestDelete(leaf, $event)"
+              title="Verwijderen"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+        } } @if (addingAtLevel === 2) {
+        <div class="item-form-row adding" (click)="$event.stopPropagation()">
+          <div class="form-fields">
+            <div class="form-name-row">
+              <input
+                class="item-text-input"
+                [(ngModel)]="newName"
+                (keydown.enter)="saveAdd()"
+                (keydown.escape)="cancelAdd()"
+                placeholder="Naam categorie..."
+                autofocus
+              />
+            </div>
+          </div>
+          <div class="row-actions">
+            <button class="btn-row-save" (click)="saveAdd()" [disabled]="!newName.trim()">
+              Toevoegen
+            </button>
+            <button class="btn-row-cancel" (click)="cancelAdd()">Annuleer</button>
+          </div>
+        </div>
+        } @if (leaves.length === 0 && addingAtLevel !== 2) {
+        <div class="column-empty-state">
+          <span>Geen categorieën — klik op + Nieuw</span>
+        </div>
+        } }
+      </div>
+    </div>
+  </div>
+</div>
