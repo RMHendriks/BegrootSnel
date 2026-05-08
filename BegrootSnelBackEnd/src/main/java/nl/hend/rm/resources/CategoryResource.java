@@ -27,23 +27,19 @@ public class CategoryResource {
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     public Response postCategory() {
         return Response.status(Response.Status.NOT_IMPLEMENTED).build();
     }
 
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     public Response putCategory() {
         return Response.status(Response.Status.NOT_IMPLEMENTED).build();
     }
 
     @DELETE
     @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     public Response deleteCategory() {
         return Response.status(Response.Status.NOT_IMPLEMENTED).build();
     }
-
 }

@@ -6,11 +6,10 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
-import nl.hend.rm.entities.Category;
-
 import java.io.InputStream;
 import java.util.List;
 import java.util.Objects;
+import nl.hend.rm.entities.Category;
 
 @ApplicationScoped
 public class CategoryInitializer {
@@ -30,12 +29,19 @@ public class CategoryInitializer {
     }
 
     private void loadCategoriesFromJson() throws Exception {
-        InputStream is = getClass().getResourceAsStream("/documents/categories/categories.json");
+        InputStream is = getClass().getResourceAsStream(
+            "/documents/categories/categories.json"
+        );
         if (is == null) {
-            throw new IllegalStateException("categories.json not found in resources");
+            throw new IllegalStateException(
+                "categories.json not found in resources"
+            );
         }
 
-        CategoryNode[] rootNodes = objectMapper.readValue(is, CategoryNode[].class);
+        CategoryNode[] rootNodes = objectMapper.readValue(
+            is,
+            CategoryNode[].class
+        );
 
         for (CategoryNode node : rootNodes) {
             createCategoryTree(node, null);
@@ -46,8 +52,13 @@ public class CategoryInitializer {
         Category category = new Category();
         category.name = node.name;
         category.parent = parent;
-        category.assignable = Objects.requireNonNullElseGet(node.assignable, () -> (node.children == null || node.children.isEmpty()));
-        category.color = category.isRoot() ? node.color : category.retrieveNode().color;
+        category.assignable = Objects.requireNonNullElseGet(
+            node.assignable,
+            () -> (node.children == null || node.children.isEmpty())
+        );
+        category.color = category.isRoot()
+            ? node.color
+            : category.retrieveNode().color;
         category.level = category.getLevel();
 
         category.persist();
@@ -61,6 +72,7 @@ public class CategoryInitializer {
 
     // Inner class for JSON deserialization
     public static class CategoryNode {
+
         public String name;
         public List<CategoryNode> children;
         public Boolean assignable;
