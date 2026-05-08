@@ -11,71 +11,199 @@
   overflow: hidden;
 }
 
-// ─── Balance summary ─────────────────────────────────────────────────────────
+// ─── Balance summary — compact reference, not the main show ──────────────
 .balance-summary {
   display: flex;
-  gap: var(--space-4);
-  margin-bottom: var(--space-6);
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
   flex-wrap: wrap;
 }
 
 .balance-card {
   display: flex;
-  align-items: center;
-  gap: var(--space-3);
+  flex-direction: column;
+  gap: 2px;
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
   min-width: 200px;
   flex: 1;
   box-shadow: var(--shadow-xs);
 
   &.savings {
-    border-left: 4px solid #10b981; // emerald-500
+    border-left: 3px solid #10b981;
   }
 }
 
-.balance-icon {
-  color: var(--stone-400);
+// ── Header ───────────────────────────────────────────────────────────────
+.balance-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.balance-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
   flex-shrink: 0;
 
-  .savings & {
-    color: #10b981;
+  &.dot-savings {
+    background: #10b981;
   }
-}
-
-.balance-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  &.dot-payment {
+    background: var(--stone-400);
+  }
 }
 
 .balance-name {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   color: var(--stone-500);
 }
 
+.balance-date {
+  font-size: 0.58rem;
+  color: var(--stone-400);
+  margin-left: auto;
+}
+
+// ── Balance number ───────────────────────────────────────────────────────
 .balance-amount {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: 800;
-  color: var(--slate-800);
+  color: var(--slate-900);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+
+  &.positive {
+    color: var(--slate-900);
+  }
+  &.negative {
+    color: var(--color-danger);
+  }
+  &.muted {
+    color: var(--stone-300);
+    font-weight: 400;
+  }
+}
+
+// ── Per-account activity ─────────────────────────────────────────────────
+.account-activity {
+  padding-top: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+.activity-line {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.activity-net-value {
+  font-size: 0.78rem;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 
   &.positive {
-    color: var(--slate-800);
+    color: #059669;
   }
   &.negative {
     color: var(--color-danger);
   }
 }
 
-.balance-date {
-  font-size: 0.65rem;
+.activity-net-label {
+  font-size: 0.6rem;
   color: var(--stone-400);
+  font-weight: 400;
+}
+
+.activity-mom {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--stone-500);
+  font-variant-numeric: tabular-nums;
+}
+
+// ── Sparkline: zero-centered bars ────────────────────────────────────────
+.sparkline-group {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: stretch; // bars & labels share the same column widths
+  gap: 3px;
+  margin-left: 4px;
+}
+
+.sparkline {
+  display: flex;
+  gap: 4px;
+  height: 22px;
+  position: relative;
+
+  // €0 centre line
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    border-top: 1px solid var(--stone-200);
+    pointer-events: none;
+    z-index: 0;
+  }
+}
+
+.sparkline-bar {
+  flex: 1 1 7px;
+  min-width: 7px;
+  align-self: stretch; // fill the 22px sparkline height so % heights work
+  position: relative;
+  z-index: 1;
+
+  &.bar-neutral {
+  }
+
+  &.bar-up::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 50%;
+    height: var(--h, 0%);
+    background: #10b981;
+    border-radius: 1.5px 1.5px 0 0;
+  }
+
+  &.bar-down::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: var(--h, 0%);
+    background: #ef4444;
+    border-radius: 0 0 1.5px 1.5px;
+  }
+}
+
+.sparkline-labels {
+  display: flex;
+  gap: 4px;
+}
+
+.sparkline-label {
+  flex: 1 1 7px;
+  min-width: 7px;
+  font-size: 0.5rem;
+  font-weight: 500;
+  color: var(--stone-400);
+  text-align: center;
+  line-height: 1;
 }
 
 // 2. Filter Bar
@@ -243,43 +371,34 @@
   min-height: 0;
   overflow-y: auto;
   padding-bottom: var(--space-6);
-  // Mobile default: single column, page scrolls
   grid-template-columns: 1fr;
 
-  // Tablet (768–1199px): 2 columns, scrollable
   @media (min-width: 768px) and (max-width: 1199px) {
     grid-template-columns: 1fr 1fr;
-
     .root-INKOMSTEN {
       grid-column: 1;
     }
     .root-UITGAVEN {
       grid-column: 1 / -1;
-    } // full width
+    }
     .root-SPAARREKENING {
       grid-column: 1;
     }
     .root-BELEGGINGSREKENING {
       grid-column: 2;
     }
-
-    // Single-column inner list on tablet (not enough room for 2)
     .root-UITGAVEN .l1-list {
       grid-template-columns: 1fr 1fr;
     }
   }
 
-  // Desktop (≥1200px): 4-column, fixed-height
   @media (min-width: 1200px) {
-    // 4 columns; rows size to content so the right column panels aren't
-    // forced into a rigid 50/50 split.
     grid-template-columns: repeat(4, 1fr);
-    grid-auto-rows: 1fr; // equal-height rows by default …
+    grid-auto-rows: 1fr;
     overflow-y: hidden;
     padding-bottom: 0;
     height: 100%;
 
-    // … but INKOMSTEN and AUSGABEN span both rows to fill the full height.
     .root-INKOMSTEN {
       grid-column: 1;
       grid-row: 1 / span 2;
@@ -288,10 +407,6 @@
       grid-column: 2 / span 2;
       grid-row: 1 / span 2;
     }
-
-    // Right column: each panel occupies one row but sizes to its content
-    // up to the available space. They share the height equally, each scrolls
-    // internally if there's more content than fits.
     .root-SPAARREKENING {
       grid-column: 4;
       grid-row: 1;
@@ -301,16 +416,11 @@
       grid-row: 2;
     }
 
-    // UITGAVEN two-column layout: two explicit flex-column wrappers.
-    // Each .l1-col is a completely independent containing block —
-    // no cross-column constraints, so collapsing a card in one column
-    // never creates empty space in the other column.
     .root-UITGAVEN .l1-list--two-col {
       display: flex;
       gap: var(--space-3);
-      align-items: flex-start; // columns size to their own content only
+      align-items: flex-start;
     }
-
     .root-UITGAVEN .l1-col {
       flex: 1;
       min-width: 0;
@@ -318,8 +428,6 @@
       flex-direction: column;
       gap: var(--space-3);
     }
-
-    // Cards inside .l1-col use the flex gap for spacing; no margin needed.
     .root-UITGAVEN .l1-col .category-card {
       margin-bottom: 0;
     }
@@ -374,7 +482,7 @@
   overflow: hidden;
 
   @media (min-width: 1200px) {
-    margin-bottom: var(--space-3); // matches the gap inside .l1-col for UITGAVEN
+    margin-bottom: var(--space-3);
   }
 
   &[open] {
@@ -403,7 +511,6 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-
     .l1-name {
       font-size: 0.85rem;
       font-weight: 600;
@@ -449,11 +556,9 @@
     background-color: var(--color-bg-card);
     transition: background-color 0.1s ease;
     border-radius: var(--radius-sm);
-
     &:hover {
       background-color: var(--stone-100);
     }
-
     td {
       padding: 6px 8px;
       white-space: nowrap;
@@ -476,7 +581,6 @@
     font-weight: 600;
     font-variant-numeric: tabular-nums;
   }
-
   .td-diff {
     text-align: right;
     width: 22%;
@@ -493,27 +597,23 @@
     overflow: visible;
     padding-bottom: var(--space-10);
   }
-
   .dashboard-grid {
     overflow-y: visible;
     padding-bottom: 0;
     height: auto;
   }
-
   .root-container {
     height: auto;
     min-height: 200px;
     max-height: 70vh;
   }
 
-  // On mobile the filter bar stacks vertically
   .filter-card {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--space-3);
     padding: var(--space-3) var(--space-3);
   }
-
   .filter-stats {
     padding-left: 0;
     border-left: none;
@@ -522,11 +622,9 @@
     flex-wrap: wrap;
     width: 100%;
     gap: var(--space-2);
-
     .stat-divider {
       display: none;
     }
-
     .stat-item {
       align-items: flex-start;
       min-width: 80px;

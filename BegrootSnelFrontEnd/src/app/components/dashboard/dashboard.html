@@ -1,54 +1,84 @@
 <div class="dashboard-container">
-  <!-- Account balance summary -->
+  <!-- Account balance summary — compact, the dashboard grid is the main show -->
   @if (vm$ | async; as vm) {
   <div class="balance-summary">
-    @for (acc of vm.accounts; track acc.id) {
-    <div class="balance-card" [class.savings]="acc.type === 'SAVINGS'">
-      <div class="balance-icon">
-        @if (acc.type === 'SAVINGS') {
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-        </svg>
-        } @else {
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <rect x="2" y="5" width="20" height="14" rx="2" />
-          <line x1="2" y1="10" x2="22" y2="10" />
-        </svg>
-        }
-      </div>
-      <div class="balance-info">
-        <span class="balance-name">{{ acc.name }}</span>
+    @for (entry of vm.enrichedAccounts; track entry.account.id) { @let acc = entry.account; @let
+    analysis = entry.analysis;
+    <div
+      class="balance-card"
+      [class.savings]="acc.type === 'SAVINGS'"
+      [class.has-analysis]="analysis !== null"
+    >
+      <!-- Top row: dot + name + date -->
+      <div class="balance-header">
         <span
-          class="balance-amount"
-          [class.positive]="(acc.currentBalance || 0) >= 0"
-          [class.negative]="(acc.currentBalance || 0) < 0"
-        >
-          {{ (acc.currentBalance || 0) | currency:'EUR' }}
-        </span>
+          class="balance-dot"
+          [class.dot-savings]="acc.type === 'SAVINGS'"
+          [class.dot-payment]="acc.type !== 'SAVINGS'"
+        ></span>
+        <span class="balance-name">{{ acc.name }}</span>
         @if (acc.balanceDate) {
         <span class="balance-date">{{ acc.balanceDate | date:'dd MMM' }}</span>
         }
       </div>
+
+      <!-- Balance -->
+      @if (acc.currentBalance != null) {
+      <div
+        class="balance-amount"
+        [class.positive]="acc.currentBalance >= 0"
+        [class.negative]="acc.currentBalance < 0"
+      >
+        {{ acc.currentBalance | currency:'EUR' }}
+      </div>
+      } @else {
+      <div class="balance-amount muted">&mdash;</div>
+      }
+
+      <!-- Per-account activity: net flow + sparkline (all account types) -->
+      @if (analysis && analysis.monthlySnapshots.length > 0) { @let lastSnapshot =
+      analysis.monthlySnapshots[analysis.monthlySnapshots.length - 1]; @let mom =
+      analysis.monthOverMonthDelta;
+      <div class="account-activity">
+        <div class="activity-line">
+          <span
+            class="activity-net-value"
+            [class.positive]="lastSnapshot.net >= 0"
+            [class.negative]="lastSnapshot.net < 0"
+          >
+            @if (lastSnapshot.net >= 0) { + }{{ lastSnapshot.net | currency:'EUR' }}
+          </span>
+          <span class="activity-net-label">deze mnd</span>
+
+          @if (mom.absoluteDelta !== 0) {
+          <span class="activity-mom">
+            @if (mom.increased) { ▴ } @else { ▾ } {{ mom.absoluteDelta | currency:'EUR' }}
+          </span>
+          }
+
+          <!-- Sparkline: bars grow from center zero-line via ::after pseudo-elements -->
+          <span class="sparkline-group">
+            <span class="sparkline">
+              @for (snap of analysis.monthlySnapshots; track snap.year + '-' + snap.month; let i =
+              $index) {
+              <span
+                class="sparkline-bar"
+                [class.bar-up]="snap.net > 0"
+                [class.bar-down]="snap.net < 0"
+                [class.bar-neutral]="snap.net === 0"
+                [style.--h]="sparklineBarWidths(analysis)[i]"
+              ></span>
+              }
+            </span>
+            <span class="sparkline-labels">
+              @for (label of sparklineMonthLabels(analysis); track $index) {
+              <span class="sparkline-label">{{ label }}</span>
+              }
+            </span>
+          </span>
+        </div>
+      </div>
+      }
     </div>
     }
   </div>
@@ -158,7 +188,6 @@
 
       <div class="root-scroll-area">
         @if (root.name === 'UITGAVEN') {
-        <!-- Two independent flex-column wrappers so cards never jump between columns -->
         <div class="l1-list l1-list--two-col">
           <div class="l1-col">
             @for (item of getLeftGroups(l1Groups); track item.level1.id) {
@@ -253,7 +282,6 @@
         </div>
 
         } @else {
-        <!-- Single column for all other roots -->
         <div class="l1-list">
           @for (item of l1Groups; track item.level1.id) {
           <details class="category-card" [attr.open]="true">
@@ -268,7 +296,8 @@
                 <thead>
                   <tr>
                     <th class="th-name">Categorie</th>
-                    @if (root.name === 'INKOMSTEN') {
+                    @if (root.name === 'INKOMSTEN' || root.name === 'SPAARREKENING' || root.name ===
+                    'BELEGGINGSREKENING') {
                     <th class="th-amount">Verwacht</th>
                     <th class="th-amount">Ontvangen</th>
                     <th class="th-amount">Verschil</th>
@@ -287,7 +316,8 @@
                       {{ group.budgetedAmount | currency:'EUR' }}
                     </td>
                     <td class="td-amount text-dark">{{ group.actualAmount | currency:'EUR' }}</td>
-                    @let isIncome = root.name === 'INKOMSTEN'; @let diff = isIncome ?
+                    @let isIncomeLike = root.name === 'INKOMSTEN' || root.name === 'SPAARREKENING'
+                    || root.name === 'BELEGGINGSREKENING'; @let diff = isIncomeLike ?
                     (group.actualAmount - group.budgetedAmount) : (group.budgetedAmount -
                     group.actualAmount);
                     <td class="td-amount td-diff">
