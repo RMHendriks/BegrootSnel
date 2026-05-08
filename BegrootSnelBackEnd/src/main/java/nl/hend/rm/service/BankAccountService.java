@@ -4,6 +4,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.NotFoundException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import nl.hend.rm.entities.AccountType;
@@ -14,14 +15,30 @@ import nl.hend.rm.entities.Transaction;
 public class BankAccountService {
 
     public List<BankAccount> listActive() {
+        return listActive(null);
+    }
+
+    public List<BankAccount> listActive(LocalDate balanceDate) {
         List<BankAccount> accounts = BankAccount.listActive();
-        accounts.forEach(this::populateBalance);
+        if (balanceDate != null) {
+            accounts.forEach(a -> populateBalanceAtDate(a, balanceDate));
+        } else {
+            accounts.forEach(this::populateBalance);
+        }
         return accounts;
     }
 
     public List<BankAccount> listAll() {
+        return listAll(null);
+    }
+
+    public List<BankAccount> listAll(LocalDate balanceDate) {
         List<BankAccount> accounts = BankAccount.listAll();
-        accounts.forEach(this::populateBalance);
+        if (balanceDate != null) {
+            accounts.forEach(a -> populateBalanceAtDate(a, balanceDate));
+        } else {
+            accounts.forEach(this::populateBalance);
+        }
         return accounts;
     }
 
@@ -39,6 +56,30 @@ public class BankAccountService {
         if (latest != null) {
             account.currentBalance = latest.newBalance;
             account.balanceDate = latest.transactionDate.atStartOfDay();
+        } else {
+            account.currentBalance = null;
+            account.balanceDate = null;
+        }
+    }
+
+    /**
+     * Sets currentBalance from the last transaction on or before the given date.
+     * Explicitly nulls both fields when there is no transaction up to that date
+     * so the frontend shows "—" instead of a stale database value.
+     */
+    private void populateBalanceAtDate(BankAccount account, LocalDate date) {
+        Transaction lastInPeriod = Transaction.find(
+            "account.id = ?1 and transactionDate <= ?2 ORDER BY transactionDate DESC, id DESC",
+            account.id,
+            date
+        ).firstResult();
+
+        if (lastInPeriod != null) {
+            account.currentBalance = lastInPeriod.newBalance;
+            account.balanceDate = lastInPeriod.transactionDate.atStartOfDay();
+        } else {
+            account.currentBalance = null;
+            account.balanceDate = null;
         }
     }
 
@@ -56,7 +97,6 @@ public class BankAccountService {
 
     @Transactional
     public BankAccount create(BankAccount account) {
-        // Check for duplicate account number
         Optional<BankAccount> existing = BankAccount.findByAccountNumber(
             account.accountNumber
         );
@@ -74,7 +114,7 @@ public class BankAccountService {
             throw new IllegalArgumentException("Account type is required");
         }
         account.active = true;
-        account.id = null; // Force new entity (frontend sends id=0 for new accounts)
+        account.id = null;
         account.persist();
         return account;
     }
@@ -95,7 +135,6 @@ public class BankAccountService {
             existing.color = updated.color;
         }
         if (updated.active != null) {
-            // Boolean, can be null
             existing.active = updated.active;
         }
         return existing;
@@ -107,7 +146,6 @@ public class BankAccountService {
         if (account == null) {
             throw new NotFoundException("BankAccount not found: " + id);
         }
-        // Check if there are transactions linked to this account
         long txCount = nl.hend.rm.entities.Transaction.count("account.id", id);
         if (txCount > 0) {
             throw new IllegalArgumentException(
