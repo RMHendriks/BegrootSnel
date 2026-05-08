@@ -4,11 +4,9 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import java.io.File;
 import nl.hend.rm.entities.Transaction;
 import nl.hend.rm.service.TransactionService;
-
-import java.io.File;
-
 
 @Path("/transactions")
 public class TransactionResource {
@@ -18,7 +16,10 @@ public class TransactionResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getAll() {
+    public Response getAll(@QueryParam("accountId") Long accountId) {
+        if (accountId != null) {
+            return Response.ok(ts.getByAccount(accountId)).build();
+        }
         return Response.ok(ts.getAll()).build();
     }
 
@@ -26,14 +27,19 @@ public class TransactionResource {
     @GET
     @Consumes(MediaType.APPLICATION_JSON)
     public Response importFile() {
-        ts.parseTransactionsFromFile(new File("src/main/resources/documents/TXT251228152450.TAB"));
+        ts.parseTransactionsFromFile(
+            new File("src/main/resources/documents/TXT251228152450.TAB")
+        );
         return Response.ok().build();
     }
 
     @Path("/{id}")
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response updateTransaction(@PathParam("id") long id, Transaction transaction) {
+    public Response updateTransaction(
+        @PathParam("id") long id,
+        Transaction transaction
+    ) {
         Transaction updatedTransaction = ts.updateTransaction(id, transaction);
         return Response.accepted(updatedTransaction).build();
     }
