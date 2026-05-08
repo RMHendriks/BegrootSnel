@@ -3,14 +3,12 @@ package nl.hend.rm.service;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.WebApplicationException;
-import nl.hend.rm.dto.BudgetDto;
-import nl.hend.rm.entities.Budget;
-import nl.hend.rm.entities.Category;
-import org.jboss.jandex.ClassType;
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import nl.hend.rm.dto.BudgetDto;
+import nl.hend.rm.entities.Budget;
+import nl.hend.rm.entities.Category;
 
 @ApplicationScoped
 public class BudgetService {
@@ -19,31 +17,59 @@ public class BudgetService {
         List<Category> categoryList = Category.getAssignableCategories();
         List<BudgetDto> budgetDtoList = new ArrayList<>();
 
-        for (Category category: categoryList) {
-            Budget budget = Budget.findByYearMonthAndCategory(year, month, category.id).orElse(null);
+        for (Category category : categoryList) {
+            Budget budget = Budget.findByYearMonthAndCategory(
+                year,
+                month,
+                category.id
+            ).orElse(null);
             budgetDtoList.add(mapToBudgetDto(category, budget, year, month));
         }
 
         return budgetDtoList;
     }
 
-    private BudgetDto mapToBudgetDto(Category category, Budget budget, int year, int month) {
+    private BudgetDto mapToBudgetDto(
+        Category category,
+        Budget budget,
+        int year,
+        int month
+    ) {
         if (budget == null) {
-            return new BudgetDto(category, null, BigDecimal.valueOf(0), year, month);
+            return new BudgetDto(
+                category,
+                null,
+                BigDecimal.valueOf(0),
+                year,
+                month
+            );
         }
 
         return new BudgetDto(category, budget.id, budget.amount, year, month);
     }
 
-    public BudgetDto getBudgetByYearMonthAndCategory(int year, int month, long categoryId) {
+    public BudgetDto getBudgetByYearMonthAndCategory(
+        int year,
+        int month,
+        long categoryId
+    ) {
         Category category = Category.findById(categoryId);
-        Budget budget = Budget.findByYearMonthAndCategory(year, month, categoryId).orElse(null);
+        Budget budget = Budget.findByYearMonthAndCategory(
+            year,
+            month,
+            categoryId
+        ).orElse(null);
         return mapToBudgetDto(category, budget, year, month);
     }
 
     @Transactional
     public Budget postBudget(BudgetDto dto) {
-        Budget budget = new Budget(dto.category(), dto.amount(), dto.year(), dto.month());
+        Budget budget = new Budget(
+            dto.category(),
+            dto.amount(),
+            dto.year(),
+            dto.month()
+        );
         Budget.persist(budget);
         return budget;
     }
