@@ -1,10 +1,22 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { BehaviorSubject, combineLatest, map, Observable, of, shareReplay, switchMap, take, tap } from 'rxjs';
+import {
+  BehaviorSubject,
+  combineLatest,
+  map,
+  Observable,
+  of,
+  shareReplay,
+  switchMap,
+  take,
+  tap,
+} from 'rxjs';
 import { ReportService } from '../../services/report-service';
 import { CategoryService } from '../../services/category-service';
+import { BankAccountService } from '../../services/bank-account-service';
 import { Report } from '../../models/report';
+import { BankAccount } from '../../models/bank-account';
 import { TransactionCategoryGroup } from '../../models/transaction-category-group';
 import { Category } from '../../models/category';
 import { DashboardDetailView } from '../dashboard-detail-view/dashboard-detail-view';
@@ -39,10 +51,10 @@ interface SummaryData {
   styleUrl: './dashboard.scss',
 })
 export class Dashboard implements OnInit {
-
   private reportService = inject(ReportService);
   private categoryService = inject(CategoryService);
   private budgetService = inject(BudgetService);
+  private bankAccountService = inject(BankAccountService);
 
   // Filters state
   filterMode: 'month' | 'range' = 'month';
@@ -55,31 +67,37 @@ export class Dashboard implements OnInit {
 
   availableYears = [2025, 2026];
   months = [
-    { value: 1, label: 'Januari' }, { value: 2, label: 'Februari' },
-    { value: 3, label: 'Maart' }, { value: 4, label: 'April' },
-    { value: 5, label: 'Mei' }, { value: 6, label: 'Juni' },
-    { value: 7, label: 'Juli' }, { value: 8, label: 'Augustus' },
-    { value: 9, label: 'September' }, { value: 10, label: 'Oktober' },
-    { value: 11, label: 'November' }, { value: 12, label: 'December' }
+    { value: 1, label: 'Januari' },
+    { value: 2, label: 'Februari' },
+    { value: 3, label: 'Maart' },
+    { value: 4, label: 'April' },
+    { value: 5, label: 'Mei' },
+    { value: 6, label: 'Juni' },
+    { value: 7, label: 'Juli' },
+    { value: 8, label: 'Augustus' },
+    { value: 9, label: 'September' },
+    { value: 10, label: 'Oktober' },
+    { value: 11, label: 'November' },
+    { value: 12, label: 'December' },
   ];
+
+  accounts$ = this.bankAccountService.getActive().pipe(shareReplay(1));
 
   private params$ = new BehaviorSubject<ReportParams>({
     year: this.selectedYear,
-    month: this.selectedMonth
+    month: this.selectedMonth,
   });
 
-  private allCategories$ = this.categoryService.getCategories().pipe(
-    shareReplay(1)
-  );
+  private allCategories$ = this.categoryService.getCategories().pipe(shareReplay(1));
 
   report$: Observable<Report> = this.params$.pipe(
-    switchMap(p => {
+    switchMap((p) => {
       if (p.start && p.end) {
         return this.reportService.getReport(p.start, p.end);
       }
       return this.reportService.getReportByYearAndMonth(p.year!, p.month!);
     }),
-    shareReplay(1)
+    shareReplay(1),
   );
 
   private refreshBudgets$ = new BehaviorSubject<void>(undefined);
@@ -91,20 +109,21 @@ export class Dashboard implements OnInit {
       }
       return of([]);
     }),
-    shareReplay(1)
+    shareReplay(1),
   );
 
   vm$ = combineLatest({
     report: this.report$,
     allCategories: this.allCategories$,
     budgets: this.budgets$, // Bevat de verse data na je .next()
-    roots: this.allCategories$.pipe(map(cats => cats.filter(c => c.level === 0)))
+    roots: this.allCategories$.pipe(map((cats) => cats.filter((c) => c.level === 0))),
+    accounts: this.accounts$,
   }).pipe(
-    map(({ report, allCategories, budgets, roots }) => {
-      const categoryMap = new Map(allCategories.map(c => [c.id, c]));
+    map(({ report, allCategories, budgets, roots, accounts }) => {
+      const categoryMap = new Map(allCategories.map((c) => [c.id, c]));
 
       // 1. Maak een Map van de NIEUWE budgets voor snelle lookup
-      const budgetMap = new Map(budgets.map(b => [b.category.id, b]));
+      const budgetMap = new Map(budgets.map((b) => [b.category.id, b]));
 
       const allGroups = (report as any).transactionCategoryGroupDtoList || [];
 
@@ -114,7 +133,6 @@ export class Dashboard implements OnInit {
 
       // 2. Loop door de groepen heen
       allGroups.forEach((g: TransactionCategoryGroup) => {
-
         const freshBudget = budgetMap.get(g.category.id);
 
         if (freshBudget) {
@@ -139,15 +157,14 @@ export class Dashboard implements OnInit {
         totalIncome,
         totalBudgeted,
         totalSpent,
-        difference: totalIncome - totalSpent
+        difference: totalIncome - totalSpent,
       };
 
-      return { report, roots, categoryMap, summary, budgets };
-    })
+      return { report, roots, categoryMap, summary, budgets, accounts };
+    }),
   );
 
-  ngOnInit(): void { }
-
+  ngOnInit(): void {}
 
   setFilterMode(mode: 'month' | 'range') {
     this.filterMode = mode;
@@ -189,14 +206,18 @@ export class Dashboard implements OnInit {
     let ids: number[] = [Number(category.id)];
 
     if (category.children && Array.isArray(category.children)) {
-      category.children.forEach(child => {
+      category.children.forEach((child) => {
         ids = [...ids, ...this.getAllChildIds(child)];
       });
     }
     return ids;
   }
 
-  getGroupsByRoot(report: Report, rootCategory: Category, categoryMap: Map<number, Category>): TransactionCategoryGroup[] {
+  getGroupsByRoot(
+    report: Report,
+    rootCategory: Category,
+    categoryMap: Map<number, Category>,
+  ): TransactionCategoryGroup[] {
     const allGroups = (report as any).transactionCategoryGroupDtoList || [];
     if (!allGroups.length || !rootCategory || !categoryMap.size) return [];
 
@@ -223,11 +244,15 @@ export class Dashboard implements OnInit {
   }
 
   // In de Dashboard class:
-  getLevel1Groups(report: Report, root: Category, categoryMap: Map<number, Category>): GroupedCategory[] {
+  getLevel1Groups(
+    report: Report,
+    root: Category,
+    categoryMap: Map<number, Category>,
+  ): GroupedCategory[] {
     const groups = this.getGroupsByRoot(report, root, categoryMap);
     const groupedMap = new Map<number, GroupedCategory>();
 
-    groups.forEach(g => {
+    groups.forEach((g) => {
       // Zoek de Level 1 ouder van deze Level 2 categorie
       let level1: Category | undefined;
 
@@ -251,7 +276,10 @@ export class Dashboard implements OnInit {
   }
 
   // Helper om root te vinden zonder dubbele code
-  private findRootForCategory(categoryId: number, categoryMap: Map<number, Category>): Category | undefined {
+  private findRootForCategory(
+    categoryId: number,
+    categoryMap: Map<number, Category>,
+  ): Category | undefined {
     let current = categoryMap.get(categoryId);
     let safety = 0;
     while (current && current.level !== 0 && safety < 10) {
@@ -263,6 +291,16 @@ export class Dashboard implements OnInit {
     return current;
   }
 
+  // Split an l1-group array into left / right halves for the UITGAVEN two-column layout.
+  // Ceiling ensures the left column always has >= items as the right.
+  getLeftGroups(groups: GroupedCategory[]): GroupedCategory[] {
+    return groups.slice(0, Math.ceil(groups.length / 2));
+  }
+
+  getRightGroups(groups: GroupedCategory[]): GroupedCategory[] {
+    return groups.slice(Math.ceil(groups.length / 2));
+  }
+
   calculateRootTotalByName(vm: any, rootName: string): number {
     const root = vm.roots.find((r: any) => r.name.toUpperCase() === rootName.toUpperCase());
     if (!root) return 0;
@@ -270,7 +308,6 @@ export class Dashboard implements OnInit {
     const groups = this.getGroupsByRoot(vm.report, root, vm.categoryMap);
     return this.calculateRootTotal(groups);
   }
-
 
   // --- Detail View State ---
   detailViewVisible = false;
@@ -281,15 +318,14 @@ export class Dashboard implements OnInit {
     category: { id: 0 } as Category,
     amount: 0,
     month: 0,
-    year: 0
+    year: 0,
   };
 
   actualAmount: number = 0;
 
   onRowClick(group: any) {
     // Haal de huidige data uit de VM snapshot (take 1)
-    this.vm$.pipe(take(1)).subscribe(vm => {
-
+    this.vm$.pipe(take(1)).subscribe((vm) => {
       // Zoek of er al een budget bestaat in de lijst die we al hebben
       const foundBudget = vm.budgets.find((b: Budget) => b.category.id === group.category.id);
 
@@ -303,7 +339,7 @@ export class Dashboard implements OnInit {
           category: group.category,
           amount: 0,
           month: this.selectedMonth,
-          year: this.selectedYear
+          year: this.selectedYear,
         };
       }
 
@@ -319,5 +355,4 @@ export class Dashboard implements OnInit {
   onBudgetUpdated() {
     this.refreshBudgets$.next();
   }
-
 }
