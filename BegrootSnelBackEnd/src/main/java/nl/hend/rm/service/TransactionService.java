@@ -12,6 +12,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import nl.hend.rm.dto.ParseResult;
@@ -65,6 +66,9 @@ public class TransactionService {
                 e
             );
         }
+
+        // After importing all lines, try to pair any remaining unpaired transfers
+        pairInternalTransfers();
 
         return result;
     }
@@ -150,6 +154,11 @@ public class TransactionService {
                 }
 
                 t.persist();
+
+                // Attempt to pair with an existing opposite leg immediately.
+                if (t.internalTransfer && t.transferGroupId == null) {
+                    pairSingleTransaction(t);
+                }
                 result.newTransactionCount++;
             } else {
                 if (uf != null && !existing.uploadedFiles.contains(uf)) {
@@ -327,5 +336,103 @@ public class TransactionService {
             transaction.description,
             otherSplits
         );
+    }
+
+    // ── Transfer pairing ────────────────────────────────────────────────────
+
+    /**
+     * After importing new transactions, scan for unpaired internal transfers
+     * and link them with a shared transferGroupId.
+     *
+     * Matching criteria:
+     * - Both have internalTransfer = true and transferGroupId IS NULL
+     * - Opposite mutation amounts (same absolute value, opposite sign)
+     * - Cross-referencing account numbers and counterparty numbers
+     * - Dates within 2 days of each other
+     */
+    @Transactional
+    public int pairInternalTransfers() {
+        List<Transaction> unpaired = Transaction.find(
+            "internalTransfer = true and transferGroupId IS NULL order by transactionDate asc"
+        ).list();
+
+        int paired = 0;
+        for (int i = 0; i < unpaired.size(); i++) {
+            Transaction a = unpaired.get(i);
+            if (a.transferGroupId != null) continue;
+
+            for (int j = i + 1; j < unpaired.size(); j++) {
+                Transaction b = unpaired.get(j);
+                if (b.transferGroupId != null) continue;
+
+                if (isMatchingTransfer(a, b)) {
+                    String groupId = UUID.randomUUID().toString();
+                    a.transferGroupId = groupId;
+                    b.transferGroupId = groupId;
+                    paired += 2;
+                    break;
+                }
+            }
+        }
+        return paired;
+    }
+
+    /** Try to pair a single newly-persisted transaction with an existing unpaired leg. */
+    private void pairSingleTransaction(Transaction t) {
+        if (t.transferGroupId != null) return;
+
+        List<Transaction> candidates = Transaction.find(
+            "internalTransfer = true and transferGroupId IS NULL and id != ?1 " +
+                "order by transactionDate asc",
+            t.id
+        ).list();
+
+        for (Transaction other : candidates) {
+            if (isMatchingTransfer(t, other)) {
+                String groupId = UUID.randomUUID().toString();
+                t.transferGroupId = groupId;
+                other.transferGroupId = groupId;
+                return;
+            }
+        }
+    }
+
+    private boolean isMatchingTransfer(Transaction a, Transaction b) {
+        // Mutations must be non-zero and opposite sign
+        if (
+            a.mutation.compareTo(BigDecimal.ZERO) == 0 ||
+            b.mutation.compareTo(BigDecimal.ZERO) == 0
+        ) {
+            return false;
+        }
+        if (a.mutation.signum() == b.mutation.signum()) {
+            return false;
+        }
+        // Same absolute value
+        if (a.mutation.abs().compareTo(b.mutation.abs()) != 0) {
+            return false;
+        }
+        // Both must have counterparty set
+        if (
+            a.counterpartyAccountNumber == null ||
+            b.counterpartyAccountNumber == null
+        ) {
+            return false;
+        }
+        String aAcct = a.account != null ? a.account.accountNumber : null;
+        String bAcct = b.account != null ? b.account.accountNumber : null;
+        if (aAcct == null || bAcct == null) return false;
+
+        // Cross-reference: A's counterparty == B's account, B's counterparty == A's account
+        boolean crossMatch =
+            a.counterpartyAccountNumber.equals(bAcct) &&
+            b.counterpartyAccountNumber.equals(aAcct);
+        if (!crossMatch) return false;
+
+        // Dates within 2 days of each other (handles weekend processing delays)
+        long daysDiff = Math.abs(
+            a.transactionDate.toEpochDay() - b.transactionDate.toEpochDay()
+        );
+        return daysDiff <= 2;
     }
 }

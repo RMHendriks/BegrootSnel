@@ -44,6 +44,12 @@ public class Transaction extends PanacheEntity {
 
     public boolean internalTransfer;
 
+    /** Shared UUID linking both legs of an internal transfer (OUT + IN).
+     *  null for external transactions and unpaired internal transfers.
+     *  Set during import when both sides of a transfer can be matched. */
+    @Column(nullable = true)
+    public String transferGroupId;
+
     @ManyToMany
     @JoinTable(
         name = "transaction_uploadedfile",
@@ -126,7 +132,8 @@ public class Transaction extends PanacheEntity {
             "from TransactionSplit s " +
                 "join fetch s.transaction t " +
                 "where s.category = ?1 " +
-                "and t.transactionDate between ?2 and ?3",
+                "and t.transactionDate between ?2 and ?3 " +
+                "and t.internalTransfer = false",
             cat,
             start,
             end
