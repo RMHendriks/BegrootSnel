@@ -49,3 +49,7 @@ nb-configuration.xml
 
 # Bank data
 *.TAB
+
+# Angular
+.angular/
+dist/
