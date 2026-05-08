@@ -23,6 +23,7 @@ export interface TransactionView {
   counterpartyAccountNumber?: string;
   counterpartyName?: string;
   internalTransfer: boolean;
+  transferGroupId?: string;
 
   splits: TransactionSplit[];
   uploadedFiles?: UploadedFile[];

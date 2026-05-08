@@ -25,6 +25,7 @@ export interface Transaction {
   counterpartyAccountNumber?: string;
   counterpartyName?: string;
   internalTransfer: boolean;
+  transferGroupId?: string;
 
   splits: TransactionSplit[];
   uploadedFiles?: UploadedFile[];
