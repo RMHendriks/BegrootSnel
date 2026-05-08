@@ -1,76 +1,139 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { TransactionView } from '../../models/transaction-view';
 import { Observable, forkJoin, map } from 'rxjs';
 import { TransactionService } from '../../services/transaction-service';
 import { CommonModule } from '@angular/common';
 import { TransactionCard } from '../transaction-card/transaction-card';
-import { CategoryPalette } from '../category-palette/category-palette'; 
+import { CategoryPalette } from '../category-palette/category-palette';
 import { CategoryService } from '../../services/category-service';
+import { BankAccountService } from '../../services/bank-account-service';
+import { BankAccount } from '../../models/bank-account';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-transactions-page',
-  imports: [CommonModule, TransactionCard, CategoryPalette],
+  imports: [CommonModule, FormsModule, TransactionCard, CategoryPalette],
   templateUrl: './transactions-page.html',
   styleUrl: './transactions-page.scss',
 })
 export class TransactionsPage implements OnInit {
-  
   vm$!: Observable<{ transactions: TransactionView[] }>;
   flatCategories: any[] = [];
-  
+  paletteCategories: any[] = [];
+  accounts: BankAccount[] = [];
+  selectedAccountId: number | null = null;
+
   isPaletteOpen = false;
   activeTransaction: TransactionView | null = null;
   activeSplitIndex: number | null = null;
 
-  constructor(private transactionService: TransactionService, private categoryService: CategoryService) {}
+  private bankAccountService = inject(BankAccountService);
+
+  constructor(
+    private transactionService: TransactionService,
+    private categoryService: CategoryService,
+  ) {}
 
   ngOnInit() {
     this.vm$ = forkJoin({
       cats: this.categoryService.getCategories(),
-      trans: this.transactionService.getTransactions()
+      trans: this.transactionService.getTransactions(),
+      accs: this.bankAccountService.getActive(),
     }).pipe(
-      map(({ cats, trans }) => {
+      map(({ cats, trans, accs }) => {
+        this.accounts = accs;
         this.flatCategories = this.flattenCategories(cats);
-        
-        const mappedTransactions: TransactionView[] = trans.map(t => ({
+
+        const mappedTransactions: TransactionView[] = trans.map((t) => ({
           ...t,
-          // Init met 1 lege split als er niets is
-          splits: (t.splits && t.splits.length > 0) 
-            ? t.splits 
-            : [{ category: null, amount: t.mutation, percentage: 100, usePercentage: false, parentId: t.id }],
+          splits:
+            t.splits && t.splits.length > 0
+              ? t.splits
+              : [
+                  {
+                    category: null,
+                    amount: t.mutation,
+                    percentage: 100,
+                    usePercentage: false,
+                    parentId: t.id,
+                  },
+                ],
           isExpanded: false,
-          isEditingSplits: false
+          isEditingSplits: false,
         }));
 
         return { transactions: mappedTransactions };
-      })
+      }),
     );
   }
 
-  handleOpenPalette(event: { t: TransactionView, idx: number }) {
+  handleOpenPalette(event: { t: TransactionView; idx: number }) {
     this.activeTransaction = event.t;
     this.activeSplitIndex = event.idx;
+
+    // Show only income categories for positive, expense for negative.
+    const rootFilter = event.t.mutation >= 0 ? 'INKOMEN' : 'UITGAVEN';
+    const filtered = this.flatCategories.filter((cat) => cat.path?.startsWith(rootFilter));
+
+    // Fallback: if the filter produces no results (e.g. category naming differs),
+    // show all categories so the user isn't stuck.
+    this.paletteCategories = filtered.length > 0 ? filtered : this.flatCategories;
+
     this.isPaletteOpen = true;
   }
 
   handleCategorySelect(cat: any) {
-    if (this.activeTransaction) {
-      // Safety check: zorg dat de split bestaat
-      if (!this.activeTransaction.splits || this.activeTransaction.splits.length === 0) {
-         this.activeTransaction.splits = [{ 
-             category: null, amount: this.activeTransaction.mutation, percentage: 100, usePercentage: false, parentId: this.activeTransaction.id
-         }];
+    if (this.activeTransaction && this.activeSplitIndex !== null) {
+      const splits = this.activeTransaction.splits;
+
+      if (!splits || splits.length === 0) {
+        this.activeTransaction.splits = [
+          {
+            category: cat,
+            amount: this.activeTransaction.mutation,
+            percentage: 100,
+            usePercentage: false,
+            parentId: this.activeTransaction.id,
+          },
+        ];
+      } else if (splits[this.activeSplitIndex]) {
+        splits[this.activeSplitIndex].category = cat;
+      } else {
+        splits[0].category = cat;
       }
 
-      if (this.activeSplitIndex !== null && this.activeTransaction.splits[this.activeSplitIndex]) {
-        this.activeTransaction.splits[this.activeSplitIndex].category = cat;
-      } else {
-        // Fallback naar index 0
-        this.activeTransaction.splits[0].category = cat;
+      if (!this.activeTransaction.isEditingSplits) {
+        this.transactionService.updateTransaction(this.activeTransaction).subscribe();
       }
-      this.transactionService.updateTransaction(this.activeTransaction).subscribe();
     }
     this.closePalette();
+  }
+
+  onAccountChange(accountId: number | null): void {
+    this.selectedAccountId = accountId;
+    this.vm$ = this.transactionService.getTransactions(accountId).pipe(
+      map((trans) => {
+        const mappedTransactions: TransactionView[] = trans.map((t) => ({
+          ...t,
+          splits:
+            t.splits && t.splits.length > 0
+              ? t.splits
+              : [
+                  {
+                    category: null,
+                    amount: t.mutation,
+                    percentage: 100,
+                    usePercentage: false,
+                    parentId: t.id,
+                  },
+                ],
+          isExpanded: false,
+          isEditingSplits: false,
+        }));
+
+        return { transactions: mappedTransactions };
+      }),
+    );
   }
 
   closePalette() {
@@ -79,7 +142,6 @@ export class TransactionsPage implements OnInit {
     this.activeSplitIndex = null;
   }
 
-  // Helpers
   isNewMonth(transactions: TransactionView[], index: number): boolean {
     if (index === 0) return true;
     const current = transactions[index].transactionDate;
@@ -101,7 +163,10 @@ export class TransactionsPage implements OnInit {
       const currentPath = parentPath ? `${parentPath} > ${item.name}` : item.name;
 
       if (item.children && item.children.length > 0) {
-        flatList = [...flatList, ...this.flattenCategories(item.children, currentPath, currentColor)];
+        flatList = [
+          ...flatList,
+          ...this.flattenCategories(item.children, currentPath, currentColor),
+        ];
       } else {
         flatList.push({ name: item.name, path: parentPath, color: currentColor, id: item.id });
       }

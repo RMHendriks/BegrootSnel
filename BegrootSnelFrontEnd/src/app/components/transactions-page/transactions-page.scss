@@ -1,24 +1,72 @@
+// ─── Account filter dropdown ──────────────────────────────────────────────────
+.account-filter {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--space-5);
+
+  select {
+    padding: var(--space-2) var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-card);
+    color: var(--color-text);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    outline: none;
+    min-width: 260px;
+    appearance: auto;
+    transition: border-color 0.15s;
+
+    &:hover {
+      border-color: var(--color-info);
+    }
+
+    &:focus {
+      border-color: var(--color-info);
+      box-shadow: 0 0 0 2px var(--color-info-bg);
+    }
+  }
+}
+
 .transactions-list {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 65%;
-  gap: 0; /* Ruimte tussen kaarten */
+  width: var(--content-width);
+  gap: 0;
 }
 
 app-transaction-card {
   display: block;
   width: 100%;
-  margin-bottom: 12px; /* Ruimte tussen de verschillende transactiegroepen */
+  margin-bottom: var(--space-3);
 }
 
 .page-title {
-  font-family: serif; /* Match met je screenshot */
-  padding-top: 40px;
+  font-family: var(--font-serif);
+  padding-top: var(--space-10);
   margin-bottom: 30px;
-  color: var(--text-dark);
+  color: var(--color-text);
 }
 
-app-transaction-card {
-  display: block; /* Essentieel voor breedte-berekening */
+// ─── Responsive ────────────────────────────────────────────────────────────────
+@media (max-width: 900px) {
+  .transactions-list {
+    width: 90%;
+  }
+}
+
+@media (max-width: 600px) {
+  .transactions-list {
+    width: 100%;
+  }
+  .page-title {
+    padding-top: var(--space-6);
+    margin-bottom: var(--space-5);
+    font-size: 1.3rem;
+  }
+  app-transaction-card {
+    margin-bottom: var(--space-2);
+  }
 }
