@@ -1,53 +1,124 @@
-<div class="category-wrapper" (click)="$event.stopPropagation()">
-
-      @if (transaction.isEditingSplits) {
-        @for (split of transaction.splits; track $index) {
-          <div class="split-row">
-            <button class="category-trigger split-size" 
-                    (click)="requestCategory.emit($index)"
-                    [style.border-left-color]="split.category?.color || '#e2e8f0'">
-              <span class="category-text">{{ split.category?.name || 'Selecteer...' }}</span>
-            </button>
-
-            <div class="split-input-group">
-              @if (split.usePercentage) {
-                <input type="number" [(ngModel)]="split.percentage" (input)="updateFromPercentage($index)">
-                <span class="unit">%</span>
-              } @else {
-                <span class="unit">€</span>
-                <input type="number" [(ngModel)]="split.amount" (input)="updateFromAmount($index)">
-              }
-              <button class="toggle-mode" (click)="toggleSplitMode(split)">⇄</button>
-            </div>
-
-            <button class="remove-split-btn" (click)="removeSplit($index)">X</button>
-          </div>
+<div class="split-manager" (click)="$event.stopPropagation()">
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <!-- STATE 1: Editing Mode                                               -->
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  @if (transaction.isEditingSplits) {
+  <div class="editor">
+    @for (split of transaction.splits; track $index; let i = $index) {
+    <div class="edit-row" [class.edit-row--flex]="isFlexSplit(i)">
+      <!-- Category selector -->
+      <button
+        class="cat-btn"
+        (click)="requestCategory.emit(i)"
+        [style.border-left-color]="split.category?.color || '#d6d3d1'"
+      >
+        @if (split.category?.color) {
+        <span class="cat-dot" [style.background]="split.category?.color"></span>
         }
-        <div class="split-actions">
-          <button class="add-split-btn" (click)="addSplit()">+ Extra split</button>
-          <button class="save-split-btn" (click)="saveSplit()">Opslaan</button>
-          <button class="cancel-split-btn" (click)="cancelSplitting()">Annuleer</button>
-        </div>
+        <span class="cat-label">{{ split.category?.name || 'Categorie...' }}</span>
+      </button>
+
+      <!-- Dual input: amount (absolute display) + percentage -->
+      <div class="dual-input">
+        <span class="dual-input__prefix">€</span>
+        <input
+          type="number"
+          [ngModel]="getDisplayAmount(i)"
+          (ngModelChange)="onAmountChange(i, $event)"
+          [readonly]="isFlexSplit(i)"
+          step="0.01"
+        />
+        <span class="dual-input__sep">/</span>
+        <input
+          type="number"
+          [ngModel]="getDisplayPercentage(i)"
+          (ngModelChange)="onPercentageChange(i, $event)"
+          [readonly]="isFlexSplit(i)"
+          step="0.01"
+        />
+        <span class="dual-input__suffix">%</span>
+      </div>
+
+      <!-- Flex toggle indicator (only for 3+ splits) -->
+      @if (hasFlexSystem()) { @if (isFlexSplit(i)) {
+      <span class="flex-badge">auto</span>
+      } @else {
+      <button class="flex-toggle" (click)="setFlexSplit(i)" title="Stel in als auto-aanvulling">
+        <span class="flex-toggle__dot"></span>
+      </button>
+      } } @else {
+      <span class="flex-toggle flex-toggle--ghost"></span>
       }
 
-      @else if (hasCategory()) {
-        <div class="static-splits-container" (click)="transaction.isEditingSplits = true">
-          @for (split of transaction.splits; track $index) {
-            <div class="static-split-badge">
-              <span class="split-color-dot" [style.background-color]="split.category?.color || '#e2e8f0'"></span>
-              <span class="split-name">{{ split.category?.name }}</span>
-              <span class="split-value">€ {{ split.amount | number:'1.2-2' }}</span>
-            </div>
-          }
-        </div>
-      }
-
-      @else {
-        <div class="single-mode-wrapper">
-          <button class="category-trigger" (click)="requestCategory.emit(0)" [style.border-left-color]="'#e2e8f0'">
-            <span class="category-text">Selecteer categorie...</span>
-          </button>
-          <button class="init-split-btn" (click)="startSplitting()">+ Splits transactie</button>
-        </div>
+      <!-- Remove button -->
+      @if (canRemove()) {
+      <button class="remove-btn" (click)="removeSplit(i)" title="Verwijder split">
+        <span class="remove-btn__icon"></span>
+      </button>
+      } @else {
+      <span class="remove-btn remove-btn--ghost"></span>
       }
     </div>
+    }
+
+    <!-- Add split + validation + actions -->
+    <div class="editor-footer">
+      <button class="add-btn" (click)="addSplit()">+ Extra split</button>
+
+      <div
+        class="balance"
+        [class.balance--ok]="isTotalBalanced()"
+        [class.balance--warn]="!isTotalBalanced()"
+      >
+        <span class="balance__label">Totaal</span>
+        <span class="balance__value">€ {{ getSplitTotal() | number:'1.2-2' }}</span>
+        <span class="balance__divider">/</span>
+        <span class="balance__target">€ {{ transaction.mutation | number:'1.2-2' }}</span>
+        <span class="balance__indicator">{{ getBalanceLabel() }}</span>
+      </div>
+
+      <div class="editor-actions">
+        <button class="cancel-btn" (click)="cancelEditing()">Annuleren</button>
+        <button class="save-btn" (click)="saveSplits()">Opslaan</button>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <!-- STATE 2: Display Mode (has saved splits)                            -->
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  @else if (isDisplayMode()) {
+  <div class="display">
+    <div class="display-badges">
+      @for (split of transaction.splits; track $index; let i = $index) {
+      <button
+        class="display-badge"
+        (click)="requestCategory.emit(i)"
+        [style.border-color]="split.category?.color || '#d6d3d1'"
+      >
+        <span
+          class="display-badge__dot"
+          [style.background]="split.category?.color || '#94a3b8'"
+        ></span>
+        <span class="display-badge__name">{{ split.category?.name }}</span>
+        <span class="display-badge__amount">€ {{ getDisplayAmount(i) | number:'1.2-2' }}</span>
+      </button>
+      }
+    </div>
+    <button class="edit-trigger" (click)="startEditing()">Bewerken</button>
+  </div>
+  }
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <!-- STATE 3: Unsplit Mode (no category, no splits)                      -->
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  @else {
+  <div class="unsplit">
+    <button class="cat-btn cat-btn--standalone" (click)="requestCategory.emit(0)">
+      <span class="cat-label">Selecteer categorie...</span>
+    </button>
+    <button class="split-trigger" (click)="startEditing()">+ Splits</button>
+  </div>
+  }
+</div>

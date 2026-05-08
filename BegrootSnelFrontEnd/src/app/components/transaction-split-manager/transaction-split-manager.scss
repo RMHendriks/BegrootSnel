@@ -1,181 +1,366 @@
-/* --- Acties Sectie (Rechts) --- */
-.transaction-actions {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  margin-left: auto;
-  height: 100%;
+// ============================================================
+// Transaction Split Manager
+// Three states: unsplit / display / editing
+// ============================================================
+
+.split-manager {
+  min-width: 480px;
+  max-width: 560px;
+  flex-shrink: 0;
+  padding-right: var(--space-4);
 }
 
-.category-wrapper {
-  padding-right: 24px;
-}
+// ────────────────────────────────────────────────────────────
+// Shared: Category Button
+// ────────────────────────────────────────────────────────────
 
-.category-trigger {
+.cat-btn {
   appearance: none;
-  -webkit-appearance: none;
-  background: #ffffff;
-  margin: 0;
-  width: 240px;
-  height: 42px;
-  padding: 0 14px;
-  border: 1px solid #e2e8f0;
-  border-left: 4px solid #ccc; 
-  border-radius: 8px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: var(--space-2);
+  height: 36px;
+  width: 195px;
+  padding: 0 10px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--slate-200);
+  border-left: 4px solid var(--slate-300);
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.category-trigger:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
-}
-
-.category-text {
-  font-size: 0.9rem;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
   font-weight: 500;
-  color: #334155;
+  color: var(--slate-700);
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+  flex-shrink: 0;
+
+  &:hover {
+    background: var(--slate-50);
+    border-color: var(--slate-300);
+  }
+
+  &--standalone {
+    width: 220px;
+    height: 40px;
+    font-size: 0.85rem;
+    border-left: 1px solid var(--slate-200);
+  }
+}
+
+.cat-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.cat-label {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.amount-section {
-  border-left: 1px solid #e2e8f0; 
-  padding-left: 24px;
-  min-width: 140px;
-  height: 40px;
+// ────────────────────────────────────────────────────────────
+// STATE 1: Editing
+// ────────────────────────────────────────────────────────────
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.edit-row {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-}
+  gap: var(--space-2);
 
-.amount {
-  font-family: 'Inter', sans-serif;
-  font-weight: 800;
-  font-size: 1.2rem;
-  text-align: right;
-  color: #0f172a;
-  letter-spacing: -0.5px;
-}
-
-.amount.negative {
-  color: #dc2626;
-}
-
-// statische splits
-
-.static-splits-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  max-width: 450px;
-  justify-content: flex-end;
-  align-items: center;
-  cursor: pointer;
-}
-
-.static-split-badge {
-  display: flex;
-  align-items: center;
-  background: #f1f5f9;
-  padding: 4px 10px;
-  border-radius: 20px;
-  border: 1px solid #e2e8f0;
-  gap: 8px;
-  transition: background 0.2s;
-}
-
-.static-split-badge:hover { background: #e2e8f0; }
-
-.split-color-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-.split-name { font-size: 0.75rem; font-weight: 600; color: #475569; }
-.split-value { font-size: 0.75rem; font-weight: 700; color: #1e293b; }
-
-// dynamische splits
-
-.split-row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-bottom: 4px;
-}
-
-.split-input-group {
-  display: flex;
-  align-items: center;
-  background: #f1f5f9;
-  border-radius: 6px;
-  padding: 0 8px;
-  border: 1px solid #e2e8f0;
-
-  input {
-    width: 60px;
-    border: none;
-    background: transparent;
-    padding: 8px 4px;
-    font-family: 'Inter', sans-serif;
-    font-weight: 700;
-    text-align: right;
-    outline: none;
+  &--flex {
+    .cat-btn {
+      opacity: 0.75;
+      background: var(--slate-50);
+    }
+    .dual-input {
+      background: var(--slate-50);
+      opacity: 0.75;
+      input {
+        color: var(--slate-400);
+        cursor: default;
+        font-style: italic;
+      }
+    }
   }
 }
 
-.split-input-group input {
-  width: 60px;
-  border: none;
-  background: transparent;
-  padding: 8px 4px;
-  font-weight: 700;
-  text-align: right;
-  outline: none;
-}
+// ── Dual euro / percentage input ────────────────────────────
 
-.toggle-mode {
-  border: none;
-  background: none;
-  color: #94a3b8;
-  cursor: pointer;
-  padding: 4px;
-}
-
-
-/* --- Actieknoppen Onderin --- */
-.split-actions {
+.dual-input {
   display: flex;
   align-items: center;
-  justify-content: space-between; 
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid #f1f5f9;
+  background: var(--slate-100);
+  border: 1px solid var(--slate-200);
+  border-radius: 6px;
+  padding: 0 var(--space-2);
+  height: 36px;
+  gap: 2px;
+  flex-shrink: 0;
+
+  &__prefix,
+  &__suffix {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--slate-400);
+    user-select: none;
+  }
+
+  &__sep {
+    font-size: 0.75rem;
+    color: var(--slate-300);
+    margin: 0 1px;
+    user-select: none;
+  }
+
+  input {
+    width: 72px;
+    border: none;
+    background: transparent;
+    padding: var(--space-1) 0;
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-align: right;
+    color: var(--slate-800);
+    outline: none;
+
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    appearance: textfield;
+    -moz-appearance: textfield;
+
+    &[readonly] {
+      color: var(--slate-400);
+      cursor: default;
+    }
+  }
 }
 
-.save-split-btn {
-  font-size: 0.75rem;
-  background: #1e293b; /* Match met .main-title kleur */
-  color: #ffffff;
-  border: none;
-  padding: 8px 20px;
-  border-radius: 6px;
+// ── Flex toggle ─────────────────────────────────────────────
+
+.flex-badge {
+  font-size: 0.6rem;
   font-weight: 700;
-  cursor: pointer;
   text-transform: uppercase;
-  letter-spacing: 0.05em; /* Match met dividers */
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  letter-spacing: 0.08em;
+  color: var(--slate-400);
+  background: var(--slate-100);
+  padding: 3px 6px;
+  border-radius: 4px;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.flex-toggle {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+
+  &__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 2px solid var(--slate-300);
+    transition: all 0.15s;
+  }
 
   &:hover {
-    background: #0f172a;
+    background: var(--slate-100);
+    .flex-toggle__dot {
+      border-color: var(--slate-500);
+      background: var(--slate-300);
+    }
+  }
+
+  &--ghost {
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
+// ── Remove button ───────────────────────────────────────────
+
+.remove-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+
+  &__icon {
+    position: relative;
+    width: 12px;
+    height: 12px;
+
+    &::before,
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 12px;
+      height: 1.5px;
+      background: var(--slate-300);
+      border-radius: 1px;
+      transition: background 0.15s;
+    }
+
+    &::before {
+      transform: translate(-50%, -50%) rotate(45deg);
+    }
+    &::after {
+      transform: translate(-50%, -50%) rotate(-45deg);
+    }
+  }
+
+  &:hover {
+    background: var(--color-danger-bg);
+    .remove-btn__icon::before,
+    .remove-btn__icon::after {
+      background: var(--color-danger);
+    }
+  }
+
+  &--ghost {
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
+// ── Editor footer ───────────────────────────────────────────
+
+.editor-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--slate-100);
+}
+
+.add-btn {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--slate-500);
+  background: var(--color-bg-card);
+  border: 1px solid var(--slate-200);
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    background: var(--slate-50);
+    border-color: var(--slate-300);
+    color: var(--color-info);
+  }
+}
+
+// ── Balance indicator ───────────────────────────────────────
+
+.balance {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+
+  &--ok {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+    .balance__label,
+    .balance__divider,
+    .balance__target {
+      color: var(--color-success);
+      opacity: 0.8;
+    }
+  }
+
+  &--warn {
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+    .balance__label,
+    .balance__divider,
+    .balance__target {
+      color: var(--color-danger);
+      opacity: 0.8;
+    }
+  }
+
+  &__label {
+    font-weight: 500;
+    margin-right: 4px;
+  }
+  &__value,
+  &__target {
+    font-variant-numeric: tabular-nums;
+  }
+  &__divider {
+    margin: 0 2px;
+    font-weight: 400;
+  }
+  &__indicator {
+    margin-left: 4px;
+  }
+}
+
+// ── Editor action buttons ───────────────────────────────────
+
+.editor-actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+.save-btn {
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--slate-800);
+  color: #ffffff;
+  border: none;
+  padding: 7px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all 0.15s;
+  box-shadow: var(--shadow-xs);
+
+  &:hover {
+    background: var(--slate-900);
     transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-md);
   }
 
   &:active {
@@ -183,92 +368,163 @@
   }
 }
 
-.add-split-btn {
+.cancel-btn {
   font-size: 0.75rem;
-  color: #6c7685;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  padding: 7px 14px;
-  border-radius: 6px;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.2s;
-
-  &:hover {
-    background: #f8fafc;
-    border-color: #cbd5e1;
-    color: #2563eb;
-  }
-}
-
-.cancel-split-btn {
-  font-size: 0.75rem;
-  color: #94a3b8; /* Zacht grijs als standaard */
+  font-weight: 600;
+  color: var(--slate-400);
   background: transparent;
   border: none;
-  padding: 8px 16px;
-  font-weight: 600;
+  padding: 7px 12px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s;
 
   &:hover {
-    color: #ef4444; /* Kleurt pas rood bij intentie tot annuleren */
-    background: #fff1f2;
-    border-radius: 6px;
+    color: var(--color-danger);
+    background: var(--color-danger-bg);
   }
 }
 
-.remove-split-btn {
-  background: none;
-  border: none;
-  color: #cbd5e1; 
-  cursor: pointer;
-  padding: 8px;
-  margin-left: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  border-radius: 25%; 
+// ────────────────────────────────────────────────────────────
+// STATE 2: Display
+// ────────────────────────────────────────────────────────────
 
-  &:hover {
-    color: #ef4444;
-    background: #fee2e2;
-  }
-}
-
-.single-mode-wrapper {
+.display {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
+  align-items: flex-end;
+  gap: var(--space-1);
 }
 
-.init-split-btn {
+.display-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.display-badge {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--slate-50);
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--slate-200);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+
+  &:hover {
+    background: var(--slate-100);
+    border-color: var(--slate-300);
+  }
+
+  &__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  &__name {
+    font-size: 0.73rem;
+    font-weight: 600;
+    color: var(--slate-600);
+  }
+  &__amount {
+    font-size: 0.73rem;
+    font-weight: 700;
+    color: var(--slate-800);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.edit-trigger {
   font-size: 0.7rem;
-  color: #94a3b8;
+  font-weight: 600;
+  color: var(--slate-400);
   background: none;
   border: none;
   cursor: pointer;
   padding: 0;
-  margin-left: 4px;
-  transition: color 0.2s;
+  transition: color 0.15s;
+
+  &:hover {
+    color: var(--color-info);
+    text-decoration: underline;
+  }
 }
 
-.init-split-btn:hover {
-  color: #3b82f6;
-  text-decoration: underline;
+// ────────────────────────────────────────────────────────────
+// STATE 3: Unsplit
+// ────────────────────────────────────────────────────────────
+
+.unsplit {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
 }
 
+.split-trigger {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--slate-400);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 2px;
+  transition: color 0.15s;
 
-/* De trigger moet iets smaller zijn in split-mode om ruimte te maken voor de inputs */
-.category-trigger.split-size {
-  width: 180px; 
-  height: 36px;
-  font-size: 0.85rem;
+  &:hover {
+    color: var(--color-info);
+    text-decoration: underline;
+  }
 }
 
+// ────────────────────────────────────────────────────────────
+// Responsive
+// ────────────────────────────────────────────────────────────
 
+@media (max-width: 640px) {
+  .split-manager {
+    max-width: 100%;
+  }
+
+  .cat-btn {
+    width: 130px;
+    font-size: 0.73rem;
+    &--standalone {
+      width: 160px;
+    }
+  }
+
+  .dual-input input {
+    width: 48px;
+    font-size: 0.73rem;
+  }
+
+  .display-badge {
+    padding: 2px 7px;
+    &__name,
+    &__amount {
+      font-size: 0.68rem;
+    }
+  }
+
+  .editor-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .editor-actions {
+    margin-left: 0;
+    justify-content: flex-end;
+  }
+  .balance {
+    justify-content: center;
+  }
+}
