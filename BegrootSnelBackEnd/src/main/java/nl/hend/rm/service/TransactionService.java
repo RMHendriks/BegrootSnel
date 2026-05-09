@@ -28,6 +28,9 @@ public class TransactionService {
     @Inject
     BankAccountService bankAccountService;
 
+    @Inject
+    RecurringTransactionService recurringTransactionService;
+
     private static final DateTimeFormatter BANK_DATE_FORMAT =
         DateTimeFormatter.ofPattern("yyyyMMdd");
 
@@ -153,7 +156,13 @@ public class TransactionService {
                     });
                 }
 
+                // Extract stable counterparty name for recurring detection
+                t.counterpartyName = extractCounterpartyName(description);
+
                 t.persist();
+
+                // Auto-assign category based on confirmed recurring patterns
+                recurringTransactionService.autoAssignToTransaction(t);
 
                 // Attempt to pair with an existing opposite leg immediately.
                 if (t.internalTransfer && t.transferGroupId == null) {
@@ -204,6 +213,36 @@ public class TransactionService {
             if (!digits.equals(ownAccountNumber)) {
                 return digits;
             }
+        }
+
+        return null;
+    }
+
+    /**
+     * Extracts a stable counterparty name from the description for use in
+     * recurring-transaction detection. Uses the same /NAME/ pattern as
+     * createPrettyTitle but returns only the name part (not the month-specific
+     * description), which is stable across months.
+     */
+    private String extractCounterpartyName(String description) {
+        if (description == null || description.isBlank()) return null;
+
+        if (description.contains("/NAME/")) {
+            return Pattern.compile("/NAME/([^/]+)")
+                .matcher(description)
+                .results()
+                .map(m -> m.group(1).trim())
+                .findFirst()
+                .orElse(null);
+        }
+
+        if (description.contains("BEA,")) {
+            return Pattern.compile("\\*(.*?)(?=,|\\sNR:|\\d{2}\\.\\d{2})")
+                .matcher(description)
+                .results()
+                .map(m -> m.group(1).trim())
+                .findFirst()
+                .orElse(null);
         }
 
         return null;
@@ -275,6 +314,46 @@ public class TransactionService {
             fromDb.splits.size();
         }
         return fromDb;
+    }
+
+    /**
+     * Deletes a single transaction. Only allowed when the transaction has no
+     * associated files (orphaned) to prevent accidental deletion of valid data.
+     *
+     * @return true if deleted, false if the transaction had file associations
+     */
+    @Transactional
+    public boolean deleteTransaction(long id) {
+        Transaction t = Transaction.findById(id);
+        if (t == null) return false;
+        if (t.uploadedFiles != null && !t.uploadedFiles.isEmpty()) {
+            return false; // still has file associations — refuse deletion
+        }
+        t.delete();
+        return true;
+    }
+
+    /**
+     * Deletes all orphaned transactions for a given account (or all accounts
+     * if accountId is null). Returns the number of deleted transactions.
+     */
+    @Transactional
+    public int deleteOrphanedTransactions(Long accountId) {
+        String query =
+            accountId != null
+                ? "account.id = ?1 and size(uploadedFiles) = 0"
+                : "size(uploadedFiles) = 0";
+
+        List<Transaction> orphans =
+            accountId != null
+                ? Transaction.find(query, accountId).list()
+                : Transaction.find(query).list();
+
+        int count = orphans.size();
+        for (Transaction t : orphans) {
+            t.delete();
+        }
+        return count;
     }
 
     public List<Transaction> getAll() {

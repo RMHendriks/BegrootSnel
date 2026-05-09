@@ -33,4 +33,15 @@ export class TransactionService {
   intializeTransactions(): Observable<Transaction> {
     return this.http.get<Transaction>(`${this.baseUrl}/transactions/load`);
   }
+
+  deleteTransaction(id: number): Observable<{ deleted: boolean }> {
+    return this.http.delete<{ deleted: boolean }>(`${this.baseUrl}/transactions/${id}`);
+  }
+
+  deleteOrphanedTransactions(accountId?: number): Observable<{ deletedCount: number }> {
+    const params = accountId ? `?accountId=${accountId}` : '';
+    return this.http.delete<{ deletedCount: number }>(
+      `${this.baseUrl}/transactions/orphaned${params}`,
+    );
+  }
 }

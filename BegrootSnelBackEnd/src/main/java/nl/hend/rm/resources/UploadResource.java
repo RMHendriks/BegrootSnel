@@ -5,6 +5,7 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
+import nl.hend.rm.dto.FileDeleteResult;
 import nl.hend.rm.entities.UploadedFile;
 import nl.hend.rm.service.UploadFileService;
 import org.jboss.resteasy.reactive.RestForm;
@@ -87,14 +88,16 @@ public class UploadResource {
     }
 
     // ── DELETE /uploads/{id} ──────────────────────────────────────────────────
-    // Removes the UploadedFile record. Does NOT delete the imported transactions.
+    // Removes the UploadedFile record and its transaction associations.
+    // Recalculates counts for remaining files and returns orphaned transaction info.
 
     @DELETE
     @Path("/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
     public Response delete(@PathParam("id") Long id) {
         try {
-            uploadFileService.delete(id);
-            return Response.noContent().build();
+            FileDeleteResult result = uploadFileService.delete(id);
+            return Response.ok(result).build();
         } catch (NotFoundException e) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }

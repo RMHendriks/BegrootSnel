@@ -6,9 +6,12 @@ import jakarta.transaction.Transactional;
 import java.io.File;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import nl.hend.rm.dto.FileDeleteResult;
 import nl.hend.rm.dto.ParseResult;
 import nl.hend.rm.entities.BankAccount;
+import nl.hend.rm.entities.Transaction;
 import nl.hend.rm.entities.UploadedFile;
 
 @ApplicationScoped
@@ -198,11 +201,116 @@ public class UploadFileService {
     // ── Delete ────────────────────────────────────────────────────────────────
 
     @Transactional
-    public void delete(Long id) {
+    public FileDeleteResult delete(Long id) {
         UploadedFile file = UploadedFile.findById(id);
         if (file == null) throw new jakarta.ws.rs.NotFoundException(
             "UploadedFile not found: " + id
         );
+
+        Long accountId = file.account != null ? file.account.id : null;
+
+        // Clear join-table associations before deleting the file.
+        // Transaction owns the M:N relationship, so we must remove the file
+        // from each transaction's uploadedFiles list.
+        List<Transaction> linkedTransactions = Transaction.find(
+            "?1 member of uploadedFiles",
+            file
+        ).list();
+        for (Transaction t : linkedTransactions) {
+            t.uploadedFiles.remove(file);
+        }
+
+        // Flush to persist join-table removals before the file delete
+        Transaction.flush();
+
         file.delete();
+
+        FileDeleteResult result = new FileDeleteResult();
+        result.deleted = file;
+
+        // Recalculate counts and gaps for remaining files of this account
+        if (accountId != null) {
+            result.updatedFiles = recalculateCountsAndGaps(accountId);
+            result.orphanedTransactions = buildOrphanedSummary(accountId);
+        } else {
+            result.updatedFiles = new ArrayList<>();
+            result.orphanedTransactions =
+                FileDeleteResult.OrphanedSummary.empty();
+        }
+
+        return result;
+    }
+
+    /**
+     * Recalculates transactionCount and duplicateCount for every remaining
+     * file of the given account, then recomputes gap status.
+     *
+     * transactionCount = transactions that exist ONLY in this file
+     * duplicateCount  = total linked transactions - transactionCount
+     */
+    private List<UploadedFile> recalculateCountsAndGaps(Long accountId) {
+        List<UploadedFile> files = UploadedFile.find(
+            "account.id = ?1 order by startDate asc",
+            accountId
+        ).list();
+
+        for (UploadedFile f : files) {
+            // Count transactions where this file is the ONLY association
+            long uniqueCount = Transaction.count(
+                "?1 member of uploadedFiles and size(uploadedFiles) = 1",
+                f
+            );
+            // Count all transactions linked to this file
+            long totalLinked = Transaction.count(
+                "?1 member of uploadedFiles",
+                f
+            );
+            f.transactionCount = (int) uniqueCount;
+            f.duplicateCount = (int) (totalLinked - uniqueCount);
+        }
+
+        // Recompute gap status per account
+        for (int i = 0; i < files.size(); i++) {
+            UploadedFile f = files.get(i);
+            if (i == 0) {
+                f.hasGap = false;
+            } else {
+                UploadedFile predecessor = files.get(i - 1);
+                boolean actualGap = predecessor.endDate
+                    .plusDays(1)
+                    .isBefore(f.startDate);
+                f.hasGap = actualGap && !f.gapDismissed;
+            }
+        }
+
+        return files;
+    }
+
+    /**
+     * Builds a summary of orphaned transactions (uploadedFiles is empty)
+     * for the given account.
+     */
+    private FileDeleteResult.OrphanedSummary buildOrphanedSummary(
+        Long accountId
+    ) {
+        List<Transaction> orphans = Transaction.find(
+            "account.id = ?1 and size(uploadedFiles) = 0 order by transactionDate asc",
+            accountId
+        ).list();
+
+        if (orphans.isEmpty()) {
+            return FileDeleteResult.OrphanedSummary.empty();
+        }
+
+        BankAccount account = orphans.get(0).account;
+        FileDeleteResult.OrphanedSummary summary =
+            new FileDeleteResult.OrphanedSummary();
+        summary.count = orphans.size();
+        summary.firstDate = orphans.get(0).transactionDate;
+        summary.lastDate = orphans.get(orphans.size() - 1).transactionDate;
+        summary.accountId = account.id;
+        summary.accountName = account.name;
+        summary.accountNumber = account.accountNumber;
+        return summary;
     }
 }

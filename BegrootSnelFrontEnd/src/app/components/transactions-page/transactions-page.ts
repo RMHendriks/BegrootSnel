@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { TransactionView } from '../../models/transaction-view';
-import { Observable, forkJoin, map } from 'rxjs';
+import { Observable, Subject, forkJoin, map, startWith, switchMap } from 'rxjs';
 import { TransactionService } from '../../services/transaction-service';
 import { CommonModule } from '@angular/common';
 import { TransactionCard } from '../transaction-card/transaction-card';
@@ -9,15 +9,16 @@ import { CategoryService } from '../../services/category-service';
 import { BankAccountService } from '../../services/bank-account-service';
 import { BankAccount } from '../../models/bank-account';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-transactions-page',
-  imports: [CommonModule, FormsModule, TransactionCard, CategoryPalette],
+  imports: [CommonModule, FormsModule, RouterLink, TransactionCard, CategoryPalette],
   templateUrl: './transactions-page.html',
   styleUrl: './transactions-page.scss',
 })
 export class TransactionsPage implements OnInit {
-  vm$!: Observable<{ transactions: TransactionView[] }>;
+  vm$!: Observable<{ transactions: TransactionView[]; accounts: BankAccount[] }>;
   flatCategories: any[] = [];
   paletteCategories: any[] = [];
   accounts: BankAccount[] = [];
@@ -29,17 +30,26 @@ export class TransactionsPage implements OnInit {
 
   private bankAccountService = inject(BankAccountService);
 
+  /** Triggers a fresh fetch of transactions (and categories/accounts). */
+  private refresh$ = new Subject<void>();
+
   constructor(
     private transactionService: TransactionService,
     private categoryService: CategoryService,
   ) {}
 
   ngOnInit() {
-    this.vm$ = forkJoin({
-      cats: this.categoryService.getCategories(),
-      trans: this.transactionService.getTransactions(),
-      accs: this.bankAccountService.getActive(),
-    }).pipe(
+    // vm$ reacts to account changes and manual refreshes.
+    // startWith ensures the first fetch fires immediately on subscription.
+    this.vm$ = this.refresh$.pipe(
+      startWith(undefined),
+      switchMap(() =>
+        forkJoin({
+          cats: this.categoryService.getCategories(),
+          trans: this.transactionService.getTransactions(this.selectedAccountId),
+          accs: this.bankAccountService.getActive(),
+        }),
+      ),
       map(({ cats, trans, accs }) => {
         this.accounts = accs;
         this.flatCategories = this.flattenCategories(cats);
@@ -62,7 +72,7 @@ export class TransactionsPage implements OnInit {
           isEditingSplits: false,
         }));
 
-        return { transactions: mappedTransactions };
+        return { transactions: mappedTransactions, accounts: accs };
       }),
     );
   }
@@ -71,12 +81,9 @@ export class TransactionsPage implements OnInit {
     this.activeTransaction = event.t;
     this.activeSplitIndex = event.idx;
 
-    // Show only income categories for positive, expense for negative.
     const rootFilter = event.t.mutation >= 0 ? 'INKOMEN' : 'UITGAVEN';
     const filtered = this.flatCategories.filter((cat) => cat.path?.startsWith(rootFilter));
 
-    // Fallback: if the filter produces no results (e.g. category naming differs),
-    // show all categories so the user isn't stuck.
     this.paletteCategories = filtered.length > 0 ? filtered : this.flatCategories;
 
     this.isPaletteOpen = true;
@@ -111,35 +118,103 @@ export class TransactionsPage implements OnInit {
 
   onAccountChange(accountId: number | null): void {
     this.selectedAccountId = accountId;
-    this.vm$ = this.transactionService.getTransactions(accountId).pipe(
-      map((trans) => {
-        const mappedTransactions: TransactionView[] = trans.map((t) => ({
-          ...t,
-          splits:
-            t.splits && t.splits.length > 0
-              ? t.splits
-              : [
-                  {
-                    category: null,
-                    amount: t.mutation,
-                    percentage: 100,
-                    usePercentage: false,
-                    parentId: t.id,
-                  },
-                ],
-          isExpanded: false,
-          isEditingSplits: false,
-        }));
-
-        return { transactions: mappedTransactions };
-      }),
-    );
+    this.refresh$.next();
   }
 
   closePalette() {
     this.isPaletteOpen = false;
     this.activeTransaction = null;
     this.activeSplitIndex = null;
+  }
+
+  // ── Orphaned transactions ────────────────────────────────────────────
+
+  isOrphaned(t: TransactionView): boolean {
+    return !t.uploadedFiles || t.uploadedFiles.length === 0;
+  }
+
+  /** Returns the sum of orphan counts across all groups. */
+  orphanTotal(
+    groups: {
+      accountId: number;
+      accountName: string;
+      accountNumber: string;
+      count: number;
+      firstDate: string;
+      lastDate: string;
+    }[],
+  ): number {
+    let total = 0;
+    for (const g of groups) {
+      total += g.count;
+    }
+    return total;
+  }
+
+  /** Groups orphaned transactions per account, sorted by account name. */
+  buildOrphanGroups(transactions: TransactionView[]): {
+    accountId: number;
+    accountName: string;
+    accountNumber: string;
+    count: number;
+    firstDate: string;
+    lastDate: string;
+  }[] {
+    const orphans = transactions.filter((t) => !t.uploadedFiles || t.uploadedFiles.length === 0);
+    if (orphans.length === 0) return [];
+
+    const groups = new Map<number, { account: BankAccount; transactions: TransactionView[] }>();
+    for (const t of orphans) {
+      const acc = t.account;
+      if (!acc) continue;
+      if (!groups.has(acc.id)) {
+        groups.set(acc.id, { account: acc as BankAccount, transactions: [] });
+      }
+      groups.get(acc.id)!.transactions.push(t);
+    }
+
+    return Array.from(groups.values())
+      .map((g) => {
+        const sorted = g.transactions.sort(
+          (a, b) => new Date(a.transactionDate).getTime() - new Date(b.transactionDate).getTime(),
+        );
+        return {
+          accountId: g.account.id,
+          accountName: g.account.name,
+          accountNumber: g.account.accountNumber,
+          count: sorted.length,
+          firstDate: sorted[0].transactionDate,
+          lastDate: sorted[sorted.length - 1].transactionDate,
+        };
+      })
+      .sort((a, b) => a.accountName.localeCompare(b.accountName));
+  }
+
+  handleOrphanRemove(transaction: TransactionView): void {
+    this.transactionService.deleteTransaction(transaction.id).subscribe({
+      next: () => this.reloadTransactions(),
+      error: (err) => console.error('Failed to delete transaction', err),
+    });
+  }
+
+  handleDeleteAllOrphans(accountId: number): void {
+    this.transactionService.deleteOrphanedTransactions(accountId).subscribe({
+      next: () => this.reloadTransactions(),
+      error: (err) => console.error('Failed to delete orphans', err),
+    });
+  }
+
+  handleDeleteAllOrphansGlobally(): void {
+    this.transactionService.deleteOrphanedTransactions().subscribe({
+      next: () => this.reloadTransactions(),
+      error: (err) => console.error('Failed to delete all orphans', err),
+    });
+  }
+
+  // ── Helpers ──────────────────────────────────────────────────────────
+
+  private reloadTransactions(): void {
+    this.refresh$.next();
   }
 
   isNewMonth(transactions: TransactionView[], index: number): boolean {
@@ -168,7 +243,12 @@ export class TransactionsPage implements OnInit {
           ...this.flattenCategories(item.children, currentPath, currentColor),
         ];
       } else {
-        flatList.push({ name: item.name, path: parentPath, color: currentColor, id: item.id });
+        flatList.push({
+          name: item.name,
+          path: parentPath,
+          color: currentColor,
+          id: item.id,
+        });
       }
     }
     return flatList;

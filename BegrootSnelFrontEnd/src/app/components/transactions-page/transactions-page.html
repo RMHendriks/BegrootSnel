@@ -1,17 +1,65 @@
 <div class="transaction-container">
   <h2 class="page-title">Banktransacties</h2>
 
-  <!-- Account filter -->
+  @if (vm$ | async; as vm) { @if (vm.accounts.length === 0) {
+  <div class="empty-state">
+    <h3>Geen rekeningen gevonden</h3>
+    <p>Voeg eerst een bankrekening toe voordat je transacties kunt bekijken.</p>
+    <a class="empty-state-action" routerLink="/accounts">Rekening toevoegen</a>
+  </div>
+  } @else {
   <div class="account-filter">
     <select [(ngModel)]="selectedAccountId" (change)="onAccountChange(selectedAccountId)">
       <option [ngValue]="null">Alle rekeningen</option>
-      @for (acc of accounts; track acc.id) {
+      @for (acc of vm.accounts; track acc.id) {
       <option [ngValue]="acc.id">{{ acc.name }} ({{ acc.accountNumber }})</option>
       }
     </select>
   </div>
 
-  @if (vm$ | async; as vm) {
+  <!-- ── Orphaned transactions banner ─────────────────────────────── -->
+  @if (buildOrphanGroups(vm.transactions); as orphanGroups) { @if (orphanGroups.length > 0) {
+  <div class="orphan-banner">
+    <div class="orphan-banner-header">
+      <span class="orphan-banner-icon">&#9888;</span>
+      <span class="orphan-banner-title">Transacties zonder bestand gevonden</span>
+      <span class="orphan-banner-count">{{ orphanTotal(orphanGroups) }}</span>
+    </div>
+    <p class="orphan-banner-desc">
+      Deze transacties horen bij verwijderde bestanden. Upload een nieuw TAB-bestand dat de
+      ontbrekende periode dekt, of verwijder de transacties.
+    </p>
+    <div class="orphan-groups">
+      @for (group of orphanGroups; track group.accountId) {
+      <div class="orphan-group">
+        <div class="orphan-group-info">
+          <strong class="orphan-group-account">{{ group.accountName }}</strong>
+          <span class="orphan-group-meta">
+            {{ group.count }} transacties van {{ formatMonthLabel(group.firstDate) }} tot {{
+            formatMonthLabel(group.lastDate) }}
+          </span>
+          <span class="orphan-group-hint">
+            Upload een bestand dat de periode {{ group.firstDate }} – {{ group.lastDate }} dekt
+          </span>
+        </div>
+        <button class="orphan-group-delete" (click)="handleDeleteAllOrphans(group.accountId)">
+          Verwijder alle {{ group.count }}
+        </button>
+      </div>
+      }
+    </div>
+    @if (orphanGroups.length > 1) {
+    <button class="orphan-delete-all" (click)="handleDeleteAllOrphansGlobally()">
+      Verwijder alle wees transacties (alle rekeningen)
+    </button>
+    }
+  </div>
+  } } @if (vm.transactions.length === 0) {
+  <div class="empty-state">
+    <h3>Geen transacties gevonden</h3>
+    <p>Upload een nieuw TAB-bestand om transacties te importeren voor deze rekening(en).</p>
+  </div>
+  } @else {
   <div class="transactions-list">
     @for (t of vm.transactions; track t.id; let i = $index) { @if (isNewMonth(vm.transactions, i)) {
     <div class="month-divider content-width">
@@ -22,13 +70,14 @@
     <app-transaction-card
       class="content-width"
       [transaction]="t"
+      [isOrphaned]="isOrphaned(t)"
       (openPalette)="handleOpenPalette($event)"
+      (remove)="handleOrphanRemove(t)"
     >
     </app-transaction-card>
     }
   </div>
-
-  @if (isPaletteOpen) {
+  } } @if (isPaletteOpen) {
   <app-category-palette
     [categories]="paletteCategories"
     [context]="activeTransaction"

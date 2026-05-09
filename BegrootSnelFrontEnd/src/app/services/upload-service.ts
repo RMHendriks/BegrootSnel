@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environment/environment.development';
-import { UploadedFile } from '../models/uploaded-file';
+import { UploadedFile, FileDeleteResult } from '../models/uploaded-file';
 
 // ── Service ───────────────────────────────────────────────────────────────────
 @Injectable({ providedIn: 'root' })
@@ -29,7 +29,7 @@ export class UploadService {
     return this.http.put<UploadedFile>(`${this.baseUrl}/uploads/${id}/acknowledge`, null);
   }
 
-  deleteUploadedFile(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/uploads/${id}`);
+  deleteUploadedFile(id: number): Observable<FileDeleteResult> {
+    return this.http.delete<FileDeleteResult>(`${this.baseUrl}/uploads/${id}`);
   }
 }

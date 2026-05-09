@@ -3,7 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
   BehaviorSubject,
+  catchError,
   combineLatest,
+  debounceTime,
   forkJoin,
   map,
   Observable,
@@ -21,6 +23,8 @@ import { TransactionCategoryGroup } from '../../models/transaction-category-grou
 import { Category } from '../../models/category';
 import { DashboardDetailView } from '../dashboard-detail-view/dashboard-detail-view';
 import { BudgetService } from '../../services/budget-service';
+import { RecurringTransactionService } from '../../services/recurring-transaction-service';
+import { RecurringTransaction } from '../../models/recurring-transaction';
 import { Budget } from '../../models/budget';
 import { SavingsAnalysis } from '../../models/savings-analysis';
 
@@ -70,6 +74,7 @@ export class Dashboard implements OnInit {
   private categoryService = inject(CategoryService);
   private budgetService = inject(BudgetService);
   private bankAccountService = inject(BankAccountService);
+  private recurringService = inject(RecurringTransactionService);
 
   filterMode: 'month' | 'range' = 'month';
   selectedYear = 2025;
@@ -113,6 +118,7 @@ export class Dashboard implements OnInit {
   );
 
   accountAnalyses$ = combineLatest([this.accounts$, this.params$]).pipe(
+    debounceTime(50),
     switchMap(([accounts, p]) => {
       if (accounts.length === 0) return of(new Map<number, SavingsAnalysis>());
       return forkJoin(
@@ -148,11 +154,20 @@ export class Dashboard implements OnInit {
     shareReplay(1),
   );
 
+  missingBudgets$ = combineLatest([this.params$, this.refreshBudgets$]).pipe(
+    switchMap(([p]) => {
+      if (p.year && p.month) return this.recurringService.getMissingBudgets(p.year, p.month);
+      return of([]);
+    }),
+    catchError(() => of([])),
+    shareReplay(1),
+  );
+
   vm$ = combineLatest({
     report: this.report$,
     allCategories: this.allCategories$,
     budgets: this.budgets$,
-    roots: this.allCategories$.pipe(map((cats) => cats.filter((c) => c.level === 0))),
+    roots: this.allCategories$.pipe(map((cats) => cats.filter((c) => c.parentId == null))),
     accounts: this.accounts$,
     accountAnalyses: this.accountAnalyses$,
   }).pipe(
@@ -242,7 +257,7 @@ export class Dashboard implements OnInit {
       let current = group.category;
       if (!current) return false;
       let safetyBreak = 0;
-      while (current && current.level !== 0 && safetyBreak < 10) {
+      while (current && (current as any).parentId != null && safetyBreak < 10) {
         const parentId = (current as any).parentId;
         if (!parentId) break;
         current = categoryMap.get(parentId)!;
@@ -284,7 +299,7 @@ export class Dashboard implements OnInit {
   ): Category | undefined {
     let current = categoryMap.get(categoryId);
     let safety = 0;
-    while (current && current.level !== 0 && safety < 10) {
+    while (current && (current as any).parentId != null && safety < 10) {
       const parentId = (current as any).parentId;
       if (!parentId) break;
       current = categoryMap.get(parentId);
@@ -350,6 +365,22 @@ export class Dashboard implements OnInit {
 
   closeDetailView() {
     this.detailViewVisible = false;
+  }
+
+  fillMissingBudgets(missing: any[]) {
+    for (const rt of missing) {
+      const budget: Budget = {
+        budgetId: null,
+        category: rt.category || ({ id: rt.category_id } as Category),
+        amount: rt.expectedAmount,
+        month: this.selectedMonth,
+        year: this.selectedYear,
+      };
+      this.budgetService.postBudget(budget).subscribe({
+        next: () => this.refreshBudgets$.next(),
+        error: (err) => console.error('Failed to auto-fill budget:', err),
+      });
+    }
   }
   onBudgetUpdated() {
     this.refreshBudgets$.next();

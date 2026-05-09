@@ -1,0 +1,281 @@
+<div class="page-container">
+  <div class="page-header">
+    <h2>Terugkerende Transacties</h2>
+    <p class="page-subtitle">
+      Automatisch gedetecteerde vaste lasten, abonnementen en inkomsten. Bevestig ze om budgetten
+      automatisch te laten invullen.
+    </p>
+  </div>
+
+  <div class="toolbar">
+    <button class="btn-scan" (click)="scan()" [disabled]="isScanning">
+      <ng-container *ngIf="isScanning; else notScanning">
+        <span class="spinner"></span>
+        Scannen...
+      </ng-container>
+      <ng-template #notScanning>Scan opnieuw</ng-template>
+    </button>
+  </div>
+
+  <ng-container *ngIf="allItems$ | async as allItems">
+    <div class="empty-state" *ngIf="allItems.length === 0">
+      <div class="empty-icon">&#9703;</div>
+      <h2>Nog geen terugkerende transacties gedetecteerd</h2>
+      <p>
+        Klik op "Scan opnieuw" om je transacties te analyseren op terugkerende patronen zoals
+        abonnementen, huur, salaris en andere vaste posten.
+      </p>
+    </div>
+
+    <ng-container *ngIf="allItems.length > 0">
+      <section class="section" *ngIf="confirmedItems$ | async as confirmed">
+        <ng-container *ngIf="confirmed.length > 0">
+          <h2 class="section-title">
+            Bevestigd
+            <span class="badge-count">{{ confirmed.length }}</span>
+          </h2>
+
+          <div class="confirmed-table-wrapper">
+            <table class="confirmed-table">
+              <thead>
+                <tr>
+                  <th>Tegenpartij</th>
+                  <th>Categorie</th>
+                  <th>Bedrag</th>
+                  <th>Frequentie</th>
+                  <th>Type</th>
+                  <th>Auto-budget</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <ng-container *ngFor="let item of confirmed">
+                  <tr
+                    [class.editing]="editingId === item.id"
+                    [class.expanded]="expandedId === item.id"
+                    (click)="toggleExpand(item)"
+                    style="cursor: pointer"
+                  >
+                    <td class="td-name">{{ item.displayName }}</td>
+
+                    <td class="td-category">
+                      <span
+                        class="cat-chip cat-chip-clickable"
+                        [style.background-color]="item.category?.color || '#e2e8f0'"
+                        (click)="openPalette(item); $event.stopPropagation()"
+                        title="Klik om categorie te wijzigen"
+                      >
+                        {{ item.category?.name || 'Kies categorie...' }}
+                      </span>
+                    </td>
+
+                    <td class="td-amount">
+                      <ng-container *ngIf="editingId === item.id; else showAmount">
+                        <input
+                          type="number"
+                          [(ngModel)]="item.expectedAmount"
+                          class="edit-input"
+                          step="0.01"
+                        />
+                      </ng-container>
+                      <ng-template #showAmount>
+                        {{ item.expectedAmount | currency:'EUR' }}
+                      </ng-template>
+                    </td>
+
+                    <td class="td-frequency">
+                      <ng-container *ngIf="editingId === item.id; else showFreq">
+                        <select [(ngModel)]="item.frequency" class="edit-select">
+                          <option value="MONTHLY">Maandelijks</option>
+                          <option value="QUARTERLY">Per kwartaal</option>
+                          <option value="YEARLY">Jaarlijks</option>
+                        </select>
+                      </ng-container>
+                      <ng-template #showFreq> {{ freqLabels[item.frequency] }} </ng-template>
+                    </td>
+
+                    <td class="td-type">
+                      <span
+                        class="type-badge"
+                        [class.income]="item.isIncome"
+                        [class.expense]="!item.isIncome"
+                      >
+                        <ng-container *ngIf="item.isIncome">Inkomsten</ng-container>
+                        <ng-container *ngIf="!item.isIncome">Uitgaven</ng-container>
+                      </span>
+                    </td>
+
+                    <td class="td-autobudget">
+                      <button
+                        class="toggle-switch"
+                        [class.active]="item.autoBudget"
+                        [class.toggling]="togglingIds.has(item.id)"
+                        (click)="toggleAutoBudget(item); $event.stopPropagation()"
+                        [disabled]="togglingIds.has(item.id)"
+                      >
+                        <span class="toggle-knob"></span>
+                      </button>
+                    </td>
+
+                    <td class="td-actions">
+                      <ng-container *ngIf="editingId === item.id; else showActions">
+                        <div class="edit-actions-group">
+                          <button
+                            class="btn-save"
+                            (click)="saveEdit(item); $event.stopPropagation()"
+                          >
+                            Opslaan
+                          </button>
+                          <button
+                            class="btn-cancel-edit"
+                            (click)="cancelEdit(); $event.stopPropagation()"
+                          >
+                            Annuleren
+                          </button>
+                        </div>
+                      </ng-container>
+                      <ng-template #showActions>
+                        <button
+                          class="btn-edit"
+                          (click)="startEdit(item); $event.stopPropagation()"
+                        >
+                          Wijzigen
+                        </button>
+                        <button
+                          class="btn-delete"
+                          (click)="deleteItem(item.id); $event.stopPropagation()"
+                        >
+                          Verwijderen
+                        </button>
+                      </ng-template>
+                    </td>
+                  </tr>
+                  <tr *ngIf="expandedId === item.id" class="expanded-row">
+                    <td colspan="7">
+                      <div class="expanded-content">
+                        <div *ngIf="loadingExpanded" class="expanded-loading">Laden...</div>
+                        <div
+                          *ngIf="!loadingExpanded && expandedTransactions.length === 0"
+                          class="expanded-empty"
+                        >
+                          Geen overeenkomende transacties gevonden.
+                        </div>
+                        <div
+                          *ngIf="!loadingExpanded && expandedTransactions.length > 0"
+                          class="expanded-transactions"
+                        >
+                          <div *ngFor="let tx of expandedTransactions" class="mini-transaction">
+                            <span class="mini-date"
+                              >{{ tx.transactionDate | date:'dd MMM yy' }}</span
+                            >
+                            <span class="mini-desc">{{ tx.prettyTitle }}</span>
+                            <span
+                              class="mini-amount"
+                              [class.positive]="tx.mutation >= 0"
+                              [class.negative]="tx.mutation < 0"
+                            >
+                              {{ tx.mutation | currency:'EUR' }}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                </ng-container>
+              </tbody>
+            </table>
+          </div>
+        </ng-container>
+      </section>
+
+      <section class="section" *ngIf="detectedItems$ | async as detected">
+        <ng-container *ngIf="detected.length > 0">
+          <h2 class="section-title">
+            Te bevestigen
+            <span class="badge-count">{{ detected.length }}</span>
+          </h2>
+
+          <div class="detection-list">
+            <div
+              class="detection-card"
+              *ngFor="let item of detected"
+              [class.conf-high]="confidenceClass(item.confidenceScore) === 'conf-high'"
+              [class.conf-mid]="confidenceClass(item.confidenceScore) === 'conf-mid'"
+              [class.conf-low]="confidenceClass(item.confidenceScore) === 'conf-low'"
+              [class.expanded]="expandedId === item.id"
+            >
+              <div class="card-main" (click)="toggleExpand(item)" style="cursor: pointer">
+                <div class="card-info">
+                  <span class="card-name">{{ item.displayName }}</span>
+                  <span class="card-meta">
+                    {{ item.expectedAmount | currency:'EUR' }} / {{ freqLabels[item.frequency] }}
+                    &middot;
+                    <ng-container *ngIf="item.isIncome">Inkomsten</ng-container>
+                    <ng-container *ngIf="!item.isIncome">Uitgaven</ng-container>
+                  </span>
+                  <span class="card-occurrences">
+                    {{ item.occurrenceCount }}&times; gezien ({{ item.firstSeenDate | date:'MMM yy'
+                    }} &ndash; {{ item.lastSeenDate | date:'MMM yy' }})
+                  </span>
+                </div>
+
+                <div class="card-confidence">
+                  <span class="conf-badge" [class]="confidenceClass(item.confidenceScore)">
+                    {{ confidencePercent(item.confidenceScore) }}%
+                  </span>
+                  <span class="conf-label">{{ confidenceLabel(item.confidenceScore) }}</span>
+                </div>
+              </div>
+
+              <div class="card-actions">
+                <button class="btn-confirm" (click)="confirm(item.id); $event.stopPropagation()">
+                  Bevestigen
+                </button>
+                <button class="btn-dismiss" (click)="dismiss(item.id); $event.stopPropagation()">
+                  Negeren
+                </button>
+              </div>
+
+              <!-- Expanded matching transactions for detected items -->
+              <div *ngIf="expandedId === item.id" class="card-expanded">
+                <div *ngIf="loadingExpanded" class="expanded-loading">Laden...</div>
+                <div
+                  *ngIf="!loadingExpanded && expandedTransactions.length === 0"
+                  class="expanded-empty"
+                >
+                  Geen overeenkomende transacties gevonden.
+                </div>
+                <div
+                  *ngIf="!loadingExpanded && expandedTransactions.length > 0"
+                  class="expanded-transactions"
+                >
+                  <div *ngFor="let tx of expandedTransactions" class="mini-transaction">
+                    <span class="mini-date">{{ tx.transactionDate | date:'dd MMM yy' }}</span>
+                    <span class="mini-desc">{{ tx.prettyTitle }}</span>
+                    <span
+                      class="mini-amount"
+                      [class.positive]="tx.mutation >= 0"
+                      [class.negative]="tx.mutation < 0"
+                    >
+                      {{ tx.mutation | currency:'EUR' }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+      </section>
+    </ng-container>
+  </ng-container>
+
+  <ng-container *ngIf="isPaletteOpen">
+    <app-category-palette
+      [categories]="paletteCategories"
+      [context]="activePaletteContext"
+      (select)="handleCategorySelect($event)"
+      (close)="closePalette()"
+    >
+    </app-category-palette>
+  </ng-container>
+</div>

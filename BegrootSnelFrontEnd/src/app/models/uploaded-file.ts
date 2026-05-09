@@ -10,3 +10,20 @@ export interface UploadedFile {
   gapDismissed: boolean; // persisted: user has acknowledged the gap before this file
   hasGap: boolean; // computed by backend: show gap warning before this file in the timeline
 }
+
+/** Summary of orphaned transactions after a file is deleted. */
+export interface OrphanedSummary {
+  count: number;
+  firstDate: string;
+  lastDate: string;
+  accountId: number;
+  accountName: string;
+  accountNumber: string;
+}
+
+/** Response from DELETE /uploads/{id}. */
+export interface FileDeleteResult {
+  deleted: UploadedFile;
+  updatedFiles: UploadedFile[];
+  orphanedTransactions: OrphanedSummary;
+}

@@ -1,11 +1,11 @@
 package nl.hend.rm.entities;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.*;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,6 +52,7 @@ public class Category extends PanacheEntity {
         return children != null && !children.isEmpty();
     }
 
+    @JsonIgnore
     public int getLevel() {
         int level = 0;
         Category current = this.parent;

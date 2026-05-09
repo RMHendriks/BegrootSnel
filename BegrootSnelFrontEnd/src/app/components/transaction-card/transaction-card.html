@@ -2,10 +2,17 @@
   <div
     class="transaction-card"
     [class.internal-transfer]="transaction.internalTransfer"
-    [style.background]="getCardBackground()"
-    [style.border-left]="'none'"
+    [class.orphaned]="isOrphaned"
+    [style.background]="isOrphaned ? 'var(--color-bg-card)' : getCardBackground()"
+    [style.border-left]="isOrphaned ? '6px solid var(--color-warning, #f59e0b)' : 'none'"
     (click)="isExpanded = !isExpanded"
   >
+    @if (isOrphaned) {
+    <div class="orphan-warning">
+      <span class="orphan-icon">&#9888;</span>
+      <span class="orphan-label">Geen bestand</span>
+    </div>
+    }
     <div class="transaction-info">
       <div class="date">{{ transaction.transactionDate }}</div>
       <strong class="main-title">{{ transaction.prettyTitle }}</strong>
@@ -17,7 +24,6 @@
     </div>
 
     @if (transaction.internalTransfer) {
-    <!-- Auto-assigned: internal transfers need no category -->
     <div class="transfer-indicator">
       <span class="transfer-icon">↔</span>
       <span class="transfer-label">Interne overboeking</span>
@@ -37,6 +43,15 @@
       <div class="amount" [class.negative]="transaction.mutation < 0">
         € {{ transaction.mutation | number: '1.2-2' }}
       </div>
+      @if (isOrphaned) {
+      <button
+        class="btn-remove-orphan"
+        (click)="remove.emit(); $event.stopPropagation()"
+        title="Verwijder deze transactie"
+      >
+        Verwijderen
+      </button>
+      }
     </div>
   </div>
 

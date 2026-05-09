@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { BankAccountService } from '../../services/bank-account-service';
 import { UploadService } from '../../services/upload-service';
 import { BankAccount } from '../../models/bank-account';
-import { UploadedFile } from '../../models/uploaded-file';
+import { UploadedFile, FileDeleteResult } from '../../models/uploaded-file';
 
 interface Gap {
   fileId: number;
@@ -393,7 +393,11 @@ export class AccountPage implements OnInit {
   deleteFile(file: UploadedFile, event: MouseEvent): void {
     event.stopPropagation();
     this.uploadService.deleteUploadedFile(file.id).subscribe({
-      next: () => this.loadFiles(),
+      next: (result: FileDeleteResult) => {
+        // Use the recalculated files directly so counts and gaps update immediately
+        this.files = result.updatedFiles;
+        this.cdr.detectChanges();
+      },
       error: (err) => console.error('Delete failed', err),
     });
   }
